@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NewFutures VFX - 3D特效渲染平台</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Three.js库 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- 控制器 -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- GUI控制器 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.9/dat.gui.min.js"></script>
+</head>
+<body>
+    <!-- 页面加载动画 -->
+    <div id="loader">
+        <div class="loader-content">
+            <div class="loader-ring"></div>
+            <div class="loader-text">加载3D引擎中...</div>
+        </div>
+    </div>
+
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>NewFutures VFX</span>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="#home" class="nav-link active">首页</a></li>
+                <li><a href="#effects" class="nav-link">特效库</a></li>
+                <li><a href="#render" class="nav-link">渲染器</a></li>
+                <li><a href="#studio" class="nav-link">工作室</a></li>
+                <li><a href="#about" class="nav-link">关于</a></li>
+            </ul>
+            <div class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容区域 -->
+    <main class="main-content">
+        <!-- 英雄区域 -->
+        <section id="home" class="hero">
+            <div class="hero-content">
+                <h1 class="hero-title">
+                    <span class="gradient-text">下一代3D视觉特效</span>
+                    <br>实时渲染平台
+                </h1>
+                <p class="hero-subtitle">
+                    利用AI驱动的实时光线追踪技术，创造令人惊叹的3D视觉特效。
+                    从粒子系统到流体模拟，释放您的创意无限可能。
+                </p>
+                <div class="hero-buttons">
+                    <button class="btn btn-primary" onclick="startDemo()">
+                        <i class="fas fa-play"></i> 开始体验
+                    </button>
+                    <button class="btn btn-secondary" onclick="showDocumentation()">
+                        <i class="fas fa-book"></i> 查看文档
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 3D画布容器 -->
+            <div class="canvas-container">
+                <canvas id="main-canvas"></canvas>
+                <div class="canvas-overlay">
+                    <div class="performance-stats">
+                        <div class="stat">
+                            <span class="stat-label">FPS</span>
+                            <span class="stat-value" id="fps-counter">60</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">粒子数</span>
+                            <span class="stat-value" id="particle-count">0</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">GPU使用率</span>
+                            <span class="stat-value" id="gpu-usage">0%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 特效展示区域 -->
+        <section id="effects" class="effects-showcase">
+            <div class="container">
+                <h2 class="section-title">
+                    <i class="fas fa-magic"></i>
+                    3D特效展示
+                </h2>
+                <div class="effects-grid">
+                    <!-- 粒子系统 -->
+                    <div class="effect-card" data-effect="particles">
+                        <div class="effect-preview">
+                            <canvas class="effect-canvas" id="particles-canvas"></canvas>
+                        </div>
+                        <div class="effect-info">
+                            <h3><i class="fas fa-sparkles"></i> 粒子系统</h3>
+                            <p>高性能粒子引擎，支持数百万粒子的实时模拟和渲染</p>
+                            <div class="effect-controls">
+                                <button class="btn btn-sm" onclick="toggleEffect('particles')">
+                                    <i class="fas fa-play"></i> 启动
+                                </button>
+                                <button class="btn btn-sm btn-secondary" onclick="configureEffect('particles')">
+                                    <i class="fas fa-cog"></i> 配置
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 流体模拟 -->
+                    <div class="effect-card" data-effect="fluid">
+                        <div class="effect-preview">
+                            <canvas class="effect-canvas" id="fluid-canvas"></canvas>
+                        </div>
+                        <div class="effect-info">
+                            <h3><i class="fas fa-water"></i> 流体模拟</h3>
+                            <p>基于物理的流体动力学模拟，支持水、烟雾、火焰等效果</p>
+                            <div class="effect-controls">
+                                <button class="btn btn-sm" onclick="toggleEffect('fluid')">
+                                    <i class="fas fa-play"></i> 启动
+                                </button>
+                                <button class="btn btn-sm btn-secondary" onclick="configureEffect('fluid')">
+                                    <i class="fas fa-cog"></i> 配置
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 光线追踪 -->
+                    <div class="effect-card" data-effect="raytracing">
+                        <div class="effect-preview">
+                            <canvas class="effect-canvas" id="raytracing-canvas"></canvas>
+                        </div>
+                        <div class="effect-info">
+                            <h3><i class="fas fa-lightbulb"></i> 实时光线追踪</h3>
+                            <p>GPU加速的实时光线追踪渲染，提供照片级真实感光照</p>
+                            <div class="effect-controls">
+                                <button class="btn btn-sm" onclick="toggleEffect('raytracing')">
+                                    <i class="fas fa-play"></i> 启动
+                                </button>
+                                <button class="btn btn-sm btn-secondary" onclick="configureEffect('raytracing')">
+                                    <i class="fas fa-cog"></i> 配置
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 体积渲染 -->
+                    <div class="effect-card" data-effect="volumetric">
+                        <div class="effect-preview">
+                            <canvas class="effect-canvas" id="volumetric-canvas"></canvas>
+                        </div>
+                        <div class="effect-info">
+                            <h3><i class="fas fa-cloud"></i> 体积渲染</h3>
+                            <p>云、雾、烟雾等体积效果的高质量实时渲染</p>
+                            <div class="effect-controls">
+                                <button class="btn btn-sm" onclick="toggleEffect('volumetric')">
+                                    <i class="fas fa-play"></i> 启动
+                                </button>
+                                <button class="btn btn-sm btn-secondary" onclick="configureEffect('volumetric')">
+                                    <i class="fas fa-cog"></i> 配置
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 物理模拟 -->
+                    <div class="effect-card" data-effect="physics">
+                        <div class="effect-preview">
+                            <canvas class="effect-canvas" id="physics-canvas"></canvas>
+                        </div>
+                        <div class="effect-info">
+                            <h3><i class="fas fa-atom"></i> 物理模拟</h3>
+                            <p>刚体、软体、布料等物理效果的实时模拟</p>
+                            <div class="effect-controls">
+                                <button class="btn btn-sm" onclick="toggleEffect('physics')">
+                                    <i class="fas fa-play"></i> 启动
+                                </button>
+                                <button class="btn btn-sm btn-secondary" onclick="configureEffect('physics')">
+                                    <i class="fas fa-cog"></i> 配置
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AI特效 -->
+                    <div class="effect-card" data-effect="ai">
+                        <div class="effect-preview">
+                            <canvas class="effect-canvas" id="ai-canvas"></canvas>
+                        </div>
+                        <div class="effect-info">
+                            <h3><i class="fas fa-brain"></i> AI智能特效</h3>
+                            <p>基于深度学习的智能特效生成和风格迁移</p>
+                            <div class="effect-controls">
+                                <button class="btn btn-sm" onclick="toggleEffect('ai')">
+                                    <i class="fas fa-play"></i> 启动
+                                </button>
+                                <button class="btn btn-sm btn-secondary" onclick="configureEffect('ai')">
+                                    <i class="fas fa-cog"></i> 配置
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 实时渲染器 -->
+        <section id="render" class="render-section">
+            <div class="container">
+                <h2 class="section-title">
+                    <i class="fas fa-video"></i>
+                    实时渲染器
+                </h2>
+                <div class="render-workspace">
+                    <div class="render-viewport">
+                        <canvas id="render-canvas"></canvas>
+                        <div class="viewport-controls">
+                            <div class="control-group">
+                                <label>分辨率</label>
+                                <select id="resolution-select">
+                                    <option value="1920x1080">1920x1080 (Full HD)</option>
+                                    <option value="2560x1440">2560x1440 (2K)</option>
+                                    <option value="3840x2160">3840x2160 (4K)</option>
+                                    <option value="7680x4320">7680x4320 (8K)</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label>渲染质量</label>
+                                <select id="quality-select">
+                                    <option value="low">低质量 (实时)</option>
+                                    <option value="medium">中等质量</option>
+                                    <option value="high">高质量</option>
+                                    <option value="ultra">超高质量</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <button class="btn btn-primary" onclick="startRender()">
+                                    <i class="fas fa-play"></i> 开始渲染
+                                </button>
+                                <button class="btn btn-secondary" onclick="exportRender()">
+                                    <i class="fas fa-download"></i> 导出
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="render-settings">
+                        <div class="settings-panel">
+                            <h3><i class="fas fa-sliders-h"></i> 渲染设置</h3>
+                            <div id="render-gui-container"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 弹窗模态框 -->
+    <div id="effect-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h3 id="modal-title">特效配置</h3>
+            <div id="modal-body">
+                <!-- 动态内容 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 浮动操作按钮 -->
+    <div class="fab-container">
+        <button class="fab" id="main-fab">
+            <i class="fas fa-plus"></i>
+        </button>
+        <div class="fab-menu">
+            <button class="fab-item" onclick="createNewEffect()">
+                <i class="fas fa-magic"></i>
+                <span>新建特效</span>
+            </button>
+            <button class="fab-item" onclick="importAsset()">
+                <i class="fas fa-upload"></i>
+                <span>导入资产</span>
+            </button>
+            <button class="fab-item" onclick="openSettings()">
+                <i class="fas fa-cog"></i>
+                <span>设置</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- 脚本文件 -->
+    <script src="js/app.js"></script>
+    <script src="js/effects.js"></script>
+    <script src="js/renderer.js"></script>
+</body>
+</html> 

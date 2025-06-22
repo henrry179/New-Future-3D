@@ -813,4 +813,827 @@ class EffectManager {
 }
 
 // 初始化特效管理器
-const effectManager = new EffectManager(); 
+const effectManager = new EffectManager();
+
+/**
+ * 🌫️ 体积渲染系统
+ */
+class VolumetricRenderer {
+    constructor(scene) {
+        this.scene = scene;
+        this.volumetricMesh = null;
+        this.isActive = false;
+        this.time = 0;
+        
+        this.init();
+    }
+    
+    init() {
+        // 创建体积几何体
+        const geometry = new THREE.BoxGeometry(5, 5, 5, 64, 64, 64);
+        
+        // 体积渲染着色器材质
+        const material = new THREE.ShaderMaterial({
+            uniforms: {
+                time: { value: 0 },
+                density: { value: 0.3 },
+                absorption: { value: 0.1 },
+                scattering: { value: 0.2 },
+                lightPosition: { value: new THREE.Vector3(5, 5, 5) },
+                lightColor: { value: new THREE.Color(0xffffff) },
+                lightIntensity: { value: 2.0 },
+                cloudColor: { value: new THREE.Color(0x87ceeb) },
+                steps: { value: 128 }
+            },
+            vertexShader: `
+                varying vec3 vPosition;
+                varying vec3 vWorldPosition;
+                
+                void main() {
+                    vPosition = position;
+                    vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+                    vWorldPosition = worldPosition.xyz;
+                    
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                uniform float time;
+                uniform float density;
+                uniform float absorption;
+                uniform float scattering;
+                uniform vec3 lightPosition;
+                uniform vec3 lightColor;
+                uniform float lightIntensity;
+                uniform vec3 cloudColor;
+                uniform int steps;
+                
+                varying vec3 vPosition;
+                varying vec3 vWorldPosition;
+                
+                // 3D噪声函数
+                vec3 mod289(vec3 x) {
+                    return x - floor(x * (1.0 / 289.0)) * 289.0;
+                }
+                
+                vec4 mod289(vec4 x) {
+                    return x - floor(x * (1.0 / 289.0)) * 289.0;
+                }
+                
+                vec4 permute(vec4 x) {
+                    return mod289(((x*34.0)+1.0)*x);
+                }
+                
+                vec4 taylorInvSqrt(vec4 r) {
+                    return 1.79284291400159 - 0.85373472095314 * r;
+                }
+                
+                float snoise(vec3 v) {
+                    const vec2 C = vec2(1.0/6.0, 1.0/3.0);
+                    const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
+                    
+                    vec3 i = floor(v + dot(v, C.yyy));
+                    vec3 x0 = v - i + dot(i, C.xxx);
+                    
+                    vec3 g = step(x0.yzx, x0.xyz);
+                    vec3 l = 1.0 - g;
+                    vec3 i1 = min(g.xyz, l.zxy);
+                    vec3 i2 = max(g.xyz, l.zxy);
+                    
+                    vec3 x1 = x0 - i1 + C.xxx;
+                    vec3 x2 = x0 - i2 + C.yyy;
+                    vec3 x3 = x0 - D.yyy;
+                    
+                    i = mod289(i);
+                    vec4 p = permute(permute(permute(
+                        i.z + vec4(0.0, i1.z, i2.z, 1.0))
+                        + i.y + vec4(0.0, i1.y, i2.y, 1.0))
+                        + i.x + vec4(0.0, i1.x, i2.x, 1.0));
+                    
+                    float n_ = 0.142857142857;
+                    vec3 ns = n_ * D.wyz - D.xzx;
+                    
+                    vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
+                    
+                    vec4 x_ = floor(j * ns.z);
+                    vec4 y_ = floor(j - 7.0 * x_);
+                    
+                    vec4 x = x_ *ns.x + ns.yyyy;
+                    vec4 y = y_ *ns.x + ns.yyyy;
+                    vec4 h = 1.0 - abs(x) - abs(y);
+                    
+                    vec4 b0 = vec4(x.xy, y.xy);
+                    vec4 b1 = vec4(x.zw, y.zw);
+                    
+                    vec4 s0 = floor(b0)*2.0 + 1.0;
+                    vec4 s1 = floor(b1)*2.0 + 1.0;
+                    vec4 sh = -step(h, vec4(0.0));
+                    
+                    vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy;
+                    vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww;
+                    
+                    vec3 p0 = vec3(a0.xy, h.x);
+                    vec3 p1 = vec3(a0.zw, h.y);
+                    vec3 p2 = vec3(a1.xy, h.z);
+                    vec3 p3 = vec3(a1.zw, h.w);
+                    
+                    vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2,p2), dot(p3,p3)));
+                    p0 *= norm.x;
+                    p1 *= norm.y;
+                    p2 *= norm.z;
+                    p3 *= norm.w;
+                    
+                    vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
+                    m = m * m;
+                    return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
+                }
+                
+                float volumetricNoise(vec3 p) {
+                    float noise = 0.0;
+                    float amplitude = 1.0;
+                    float frequency = 1.0;
+                    
+                    for(int i = 0; i < 4; i++) {
+                        noise += amplitude * snoise(p * frequency + time * 0.1);
+                        amplitude *= 0.5;
+                        frequency *= 2.0;
+                    }
+                    
+                    return max(0.0, noise);
+                }
+                
+                void main() {
+                    vec3 rayOrigin = cameraPosition;
+                    vec3 rayDirection = normalize(vWorldPosition - rayOrigin);
+                    
+                    // 体积渲染
+                    float stepSize = 0.1;
+                    vec3 currentPos = vWorldPosition;
+                    vec3 color = vec3(0.0);
+                    float alpha = 0.0;
+                    
+                    for(int i = 0; i < 64; i++) {
+                        if(alpha >= 0.99) break;
+                        
+                        // 采样密度
+                        float noiseDensity = volumetricNoise(currentPos * 0.5);
+                        float currentDensity = density * noiseDensity;
+                        
+                        if(currentDensity > 0.0) {
+                            // 光照计算
+                            vec3 lightDir = normalize(lightPosition - currentPos);
+                            float lightDistance = length(lightPosition - currentPos);
+                            float attenuation = 1.0 / (1.0 + 0.1 * lightDistance + 0.01 * lightDistance * lightDistance);
+                            
+                            // 散射
+                            float scatteringFactor = scattering * currentDensity;
+                            vec3 scatteredLight = lightColor * lightIntensity * attenuation * scatteringFactor;
+                            
+                            // 混合颜色
+                            vec3 sampleColor = mix(cloudColor, scatteredLight, 0.5);
+                            float sampleAlpha = 1.0 - exp(-absorption * currentDensity * stepSize);
+                            
+                            // Alpha混合
+                            color += sampleColor * sampleAlpha * (1.0 - alpha);
+                            alpha += sampleAlpha * (1.0 - alpha);
+                        }
+                        
+                        currentPos += rayDirection * stepSize;
+                    }
+                    
+                    gl_FragColor = vec4(color, alpha);
+                }
+            `,
+            transparent: true,
+            side: THREE.BackSide,
+            depthWrite: false
+        });
+        
+        this.volumetricMesh = new THREE.Mesh(geometry, material);
+        this.volumetricMesh.position.set(0, 2, 0);
+        
+        console.log('🌫️ 体积渲染系统初始化完成');
+    }
+    
+    start() {
+        if (!this.isActive) {
+            this.scene.add(this.volumetricMesh);
+            this.isActive = true;
+            console.log('🟢 体积渲染启动');
+        }
+    }
+    
+    stop() {
+        if (this.isActive) {
+            this.scene.remove(this.volumetricMesh);
+            this.isActive = false;
+            console.log('🔴 体积渲染停止');
+        }
+    }
+    
+    update() {
+        if (!this.isActive) return;
+        
+        this.time += 0.016;
+        if (this.volumetricMesh.material.uniforms.time) {
+            this.volumetricMesh.material.uniforms.time.value = this.time;
+        }
+        
+        // 动态旋转
+        this.volumetricMesh.rotation.y += 0.005;
+        this.volumetricMesh.rotation.x += 0.002;
+    }
+    
+    getConfigurationHTML() {
+        return `
+            <div class="config-section">
+                <h4>密度</h4>
+                <input type="range" min="0.1" max="1" step="0.1" value="0.3" 
+                       onchange="updateVolumetricDensity(this.value)">
+            </div>
+            <div class="config-section">
+                <h4>散射强度</h4>
+                <input type="range" min="0.1" max="1" step="0.1" value="0.2"
+                       onchange="updateVolumetricScattering(this.value)">
+            </div>
+        `;
+    }
+    
+    destroy() {
+        this.stop();
+        if (this.volumetricMesh) {
+            this.volumetricMesh.geometry.dispose();
+            this.volumetricMesh.material.dispose();
+        }
+    }
+}
+
+/**
+ * 🔥 高级光线追踪系统
+ */
+class RayTracingRenderer {
+    constructor(scene) {
+        this.scene = scene;
+        this.rayTracingMesh = null;
+        this.isActive = false;
+        this.time = 0;
+        
+        this.init();
+    }
+    
+    init() {
+        // 创建全屏四边形
+        const geometry = new THREE.PlaneGeometry(2, 2);
+        
+        // 光线追踪着色器
+        const material = new THREE.ShaderMaterial({
+            uniforms: {
+                time: { value: 0 },
+                resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+                cameraPosition: { value: new THREE.Vector3(0, 0, 5) },
+                cameraTarget: { value: new THREE.Vector3(0, 0, 0) },
+                fov: { value: 75 },
+                spherePositions: { value: [
+                    new THREE.Vector3(0, 0, 0),
+                    new THREE.Vector3(2, 1, -1),
+                    new THREE.Vector3(-2, -1, 1)
+                ]},
+                sphereRadii: { value: [1.0, 0.8, 0.6] },
+                sphereMaterials: { value: [
+                    new THREE.Vector4(1.0, 0.2, 0.2, 0.8), // 红色金属
+                    new THREE.Vector4(0.2, 1.0, 0.2, 0.1), // 绿色玻璃
+                    new THREE.Vector4(0.2, 0.2, 1.0, 0.5)  // 蓝色塑料
+                ]}
+            },
+            vertexShader: `
+                varying vec2 vUv;
+                
+                void main() {
+                    vUv = uv;
+                    gl_Position = vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                uniform float time;
+                uniform vec2 resolution;
+                uniform vec3 cameraPosition;
+                uniform vec3 cameraTarget;
+                uniform float fov;
+                uniform vec3 spherePositions[3];
+                uniform float sphereRadii[3];
+                uniform vec4 sphereMaterials[3];
+                
+                varying vec2 vUv;
+                
+                struct Ray {
+                    vec3 origin;
+                    vec3 direction;
+                };
+                
+                struct Hit {
+                    bool hit;
+                    float distance;
+                    vec3 point;
+                    vec3 normal;
+                    vec4 material;
+                };
+                
+                struct Light {
+                    vec3 position;
+                    vec3 color;
+                    float intensity;
+                };
+                
+                // 球体相交测试
+                Hit intersectSphere(Ray ray, vec3 center, float radius, vec4 material) {
+                    Hit hit;
+                    hit.hit = false;
+                    
+                    vec3 oc = ray.origin - center;
+                    float a = dot(ray.direction, ray.direction);
+                    float b = 2.0 * dot(oc, ray.direction);
+                    float c = dot(oc, oc) - radius * radius;
+                    float discriminant = b * b - 4.0 * a * c;
+                    
+                    if (discriminant >= 0.0) {
+                        float t = (-b - sqrt(discriminant)) / (2.0 * a);
+                        if (t > 0.001) {
+                            hit.hit = true;
+                            hit.distance = t;
+                            hit.point = ray.origin + t * ray.direction;
+                            hit.normal = normalize(hit.point - center);
+                            hit.material = material;
+                        }
+                    }
+                    
+                    return hit;
+                }
+                
+                // 场景相交测试
+                Hit intersectScene(Ray ray) {
+                    Hit closestHit;
+                    closestHit.hit = false;
+                    closestHit.distance = 1000000.0;
+                    
+                    // 测试所有球体
+                    for (int i = 0; i < 3; i++) {
+                        Hit hit = intersectSphere(ray, spherePositions[i], sphereRadii[i], sphereMaterials[i]);
+                        if (hit.hit && hit.distance < closestHit.distance) {
+                            closestHit = hit;
+                        }
+                    }
+                    
+                    // 地面平面
+                    float t = (-2.0 - ray.origin.y) / ray.direction.y;
+                    if (t > 0.001 && t < closestHit.distance) {
+                        closestHit.hit = true;
+                        closestHit.distance = t;
+                        closestHit.point = ray.origin + t * ray.direction;
+                        closestHit.normal = vec3(0.0, 1.0, 0.0);
+                        closestHit.material = vec4(0.8, 0.8, 0.8, 0.0); // 灰色漫反射
+                    }
+                    
+                    return closestHit;
+                }
+                
+                // 计算光照
+                vec3 calculateLighting(Hit hit, vec3 viewDir, Light light) {
+                    vec3 lightDir = normalize(light.position - hit.point);
+                    vec3 halfDir = normalize(lightDir + viewDir);
+                    
+                    // 漫反射
+                    float NdotL = max(0.0, dot(hit.normal, lightDir));
+                    vec3 diffuse = hit.material.rgb * NdotL;
+                    
+                    // 镜面反射
+                    float NdotH = max(0.0, dot(hit.normal, halfDir));
+                    float shininess = mix(1.0, 128.0, hit.material.a);
+                    vec3 specular = vec3(pow(NdotH, shininess)) * hit.material.a;
+                    
+                    // 距离衰减
+                    float distance = length(light.position - hit.point);
+                    float attenuation = 1.0 / (1.0 + 0.1 * distance + 0.01 * distance * distance);
+                    
+                    return (diffuse + specular) * light.color * light.intensity * attenuation;
+                }
+                
+                // 反射光线
+                vec3 reflect(vec3 incident, vec3 normal) {
+                    return incident - 2.0 * dot(incident, normal) * normal;
+                }
+                
+                // 折射光线
+                vec3 refract(vec3 incident, vec3 normal, float eta) {
+                    float cosI = -dot(normal, incident);
+                    float sinT2 = eta * eta * (1.0 - cosI * cosI);
+                    if (sinT2 > 1.0) return vec3(0.0); // 全反射
+                    float cosT = sqrt(1.0 - sinT2);
+                    return eta * incident + (eta * cosI - cosT) * normal;
+                }
+                
+                // 光线追踪主函数
+                vec3 trace(Ray ray, int depth) {
+                    if (depth <= 0) return vec3(0.0);
+                    
+                    Hit hit = intersectScene(ray);
+                    if (!hit.hit) {
+                        // 天空盒
+                        float gradient = ray.direction.y * 0.5 + 0.5;
+                        return mix(vec3(0.5, 0.7, 1.0), vec3(1.0, 1.0, 1.0), gradient);
+                    }
+                    
+                    // 光源
+                    Light light;
+                    light.position = vec3(sin(time) * 3.0, 5.0, cos(time) * 3.0);
+                    light.color = vec3(1.0, 1.0, 1.0);
+                    light.intensity = 10.0;
+                    
+                    vec3 color = calculateLighting(hit, -ray.direction, light);
+                    
+                    // 反射
+                    if (hit.material.a > 0.1) {
+                        vec3 reflectDir = reflect(ray.direction, hit.normal);
+                        Ray reflectRay = Ray(hit.point + hit.normal * 0.001, reflectDir);
+                        vec3 reflectColor = trace(reflectRay, depth - 1);
+                        color = mix(color, reflectColor, hit.material.a * 0.5);
+                    }
+                    
+                    return color;
+                }
+                
+                void main() {
+                    vec2 uv = (vUv - 0.5) * 2.0;
+                    uv.x *= resolution.x / resolution.y;
+                    
+                    // 相机设置
+                    vec3 forward = normalize(cameraTarget - cameraPosition);
+                    vec3 right = normalize(cross(forward, vec3(0.0, 1.0, 0.0)));
+                    vec3 up = cross(right, forward);
+                    
+                    float fovRadians = fov * 3.14159 / 180.0;
+                    float focalLength = 1.0 / tan(fovRadians * 0.5);
+                    
+                    vec3 rayDirection = normalize(uv.x * right + uv.y * up + focalLength * forward);
+                    
+                    Ray ray = Ray(cameraPosition, rayDirection);
+                    vec3 color = trace(ray, 5);
+                    
+                    // 色调映射
+                    color = color / (color + vec3(1.0));
+                    color = pow(color, vec3(1.0 / 2.2));
+                    
+                    gl_FragColor = vec4(color, 1.0);
+                }
+            `
+        });
+        
+        this.rayTracingMesh = new THREE.Mesh(geometry, material);
+        this.rayTracingMesh.position.set(0, 0, 0);
+        
+        console.log('🔥 光线追踪系统初始化完成');
+    }
+    
+    start() {
+        if (!this.isActive) {
+            this.scene.add(this.rayTracingMesh);
+            this.isActive = true;
+            console.log('🟢 光线追踪启动');
+        }
+    }
+    
+    stop() {
+        if (this.isActive) {
+            this.scene.remove(this.rayTracingMesh);
+            this.isActive = false;
+            console.log('🔴 光线追踪停止');
+        }
+    }
+    
+    update() {
+        if (!this.isActive) return;
+        
+        this.time += 0.016;
+        if (this.rayTracingMesh.material.uniforms.time) {
+            this.rayTracingMesh.material.uniforms.time.value = this.time;
+        }
+        
+        // 更新球体位置（动画）
+        const positions = this.rayTracingMesh.material.uniforms.spherePositions.value;
+        positions[1].x = Math.sin(this.time) * 2;
+        positions[1].z = Math.cos(this.time) * 2;
+        positions[2].y = Math.sin(this.time * 1.5) * 1.5;
+    }
+    
+    getConfigurationHTML() {
+        return `
+            <div class="config-section">
+                <h4>反射质量</h4>
+                <input type="range" min="1" max="8" value="5" 
+                       onchange="updateRayTracingDepth(this.value)">
+            </div>
+            <div class="config-section">
+                <h4>分辨率</h4>
+                <select onchange="updateRayTracingResolution(this.value)">
+                    <option value="0.5">50%</option>
+                    <option value="1.0" selected>100%</option>
+                    <option value="2.0">200%</option>
+                </select>
+            </div>
+        `;
+    }
+    
+    destroy() {
+        this.stop();
+        if (this.rayTracingMesh) {
+            this.rayTracingMesh.geometry.dispose();
+            this.rayTracingMesh.material.dispose();
+        }
+    }
+}
+
+/**
+ * 🤖 AI智能特效系统
+ */
+class AIEffectSystem {
+    constructor(scene) {
+        this.scene = scene;
+        this.aiMeshes = [];
+        this.isActive = false;
+        this.time = 0;
+        this.neuralNetwork = null;
+        
+        this.init();
+    }
+    
+    init() {
+        this.createNeuralNetworkVisualization();
+        console.log('🤖 AI特效系统初始化完成');
+    }
+    
+    createNeuralNetworkVisualization() {
+        // 创建神经网络可视化
+        const layers = [8, 12, 16, 12, 8, 4]; // 网络层结构
+        const layerSpacing = 3;
+        const nodeSpacing = 0.8;
+        
+        // 节点
+        layers.forEach((nodeCount, layerIndex) => {
+            for (let nodeIndex = 0; nodeIndex < nodeCount; nodeIndex++) {
+                const geometry = new THREE.SphereGeometry(0.1, 16, 16);
+                const material = new THREE.MeshLambertMaterial({
+                    color: new THREE.Color().setHSL(
+                        (layerIndex / layers.length) * 0.8 + 0.1,
+                        0.8,
+                        0.6
+                    ),
+                    emissive: new THREE.Color().setHSL(
+                        (layerIndex / layers.length) * 0.8 + 0.1,
+                        0.5,
+                        0.2
+                    )
+                });
+                
+                const node = new THREE.Mesh(geometry, material);
+                node.position.set(
+                    (layerIndex - layers.length / 2) * layerSpacing,
+                    (nodeIndex - nodeCount / 2) * nodeSpacing,
+                    0
+                );
+                
+                // 添加动画属性
+                node.userData = {
+                    originalY: node.position.y,
+                    phase: Math.random() * Math.PI * 2,
+                    amplitude: 0.2
+                };
+                
+                this.aiMeshes.push(node);
+            }
+        });
+        
+        // 连接线
+        for (let layerIndex = 0; layerIndex < layers.length - 1; layerIndex++) {
+            const currentLayerNodes = layers[layerIndex];
+            const nextLayerNodes = layers[layerIndex + 1];
+            
+            for (let currentNode = 0; currentNode < currentLayerNodes; currentNode++) {
+                for (let nextNode = 0; nextNode < nextLayerNodes; nextNode++) {
+                    // 创建连接线
+                    const startPos = new THREE.Vector3(
+                        (layerIndex - layers.length / 2) * layerSpacing,
+                        (currentNode - currentLayerNodes / 2) * nodeSpacing,
+                        0
+                    );
+                    const endPos = new THREE.Vector3(
+                        (layerIndex + 1 - layers.length / 2) * layerSpacing,
+                        (nextNode - nextLayerNodes / 2) * nodeSpacing,
+                        0
+                    );
+                    
+                    const geometry = new THREE.BufferGeometry().setFromPoints([startPos, endPos]);
+                    const material = new THREE.LineBasicMaterial({
+                        color: 0x4facfe,
+                        transparent: true,
+                        opacity: 0.3
+                    });
+                    
+                    const line = new THREE.Line(geometry, material);
+                    line.userData = {
+                        originalOpacity: 0.3,
+                        pulsePhase: Math.random() * Math.PI * 2
+                    };
+                    
+                    this.aiMeshes.push(line);
+                }
+            }
+        }
+        
+        // 数据流粒子
+        this.createDataFlowParticles();
+    }
+    
+    createDataFlowParticles() {
+        const particleCount = 200;
+        const geometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(particleCount * 3);
+        const colors = new Float32Array(particleCount * 3);
+        const velocities = new Float32Array(particleCount * 3);
+        
+        for (let i = 0; i < particleCount; i++) {
+            const i3 = i * 3;
+            
+            // 位置
+            positions[i3] = (Math.random() - 0.5) * 20;
+            positions[i3 + 1] = (Math.random() - 0.5) * 10;
+            positions[i3 + 2] = (Math.random() - 0.5) * 5;
+            
+            // 颜色
+            const hue = Math.random() * 0.3 + 0.5;
+            const color = new THREE.Color().setHSL(hue, 0.8, 0.7);
+            colors[i3] = color.r;
+            colors[i3 + 1] = color.g;
+            colors[i3 + 2] = color.b;
+            
+            // 速度
+            velocities[i3] = (Math.random() - 0.5) * 0.02;
+            velocities[i3 + 1] = (Math.random() - 0.5) * 0.02;
+            velocities[i3 + 2] = (Math.random() - 0.5) * 0.02;
+        }
+        
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+        geometry.setAttribute('velocity', new THREE.BufferAttribute(velocities, 3));
+        
+        const material = new THREE.PointsMaterial({
+            size: 0.05,
+            vertexColors: true,
+            transparent: true,
+            opacity: 0.8,
+            blending: THREE.AdditiveBlending
+        });
+        
+        const particles = new THREE.Points(geometry, material);
+        this.aiMeshes.push(particles);
+    }
+    
+    start() {
+        if (!this.isActive) {
+            this.aiMeshes.forEach(mesh => this.scene.add(mesh));
+            this.isActive = true;
+            console.log('🟢 AI特效启动');
+        }
+    }
+    
+    stop() {
+        if (this.isActive) {
+            this.aiMeshes.forEach(mesh => this.scene.remove(mesh));
+            this.isActive = false;
+            console.log('🔴 AI特效停止');
+        }
+    }
+    
+    update() {
+        if (!this.isActive) return;
+        
+        this.time += 0.016;
+        
+        this.aiMeshes.forEach(mesh => {
+            if (mesh.userData) {
+                // 节点动画
+                if (mesh.userData.originalY !== undefined) {
+                    mesh.position.y = mesh.userData.originalY + 
+                        Math.sin(this.time * 2 + mesh.userData.phase) * mesh.userData.amplitude;
+                    
+                    // 发光效果
+                    if (mesh.material.emissive) {
+                        const intensity = 0.2 + Math.sin(this.time * 3 + mesh.userData.phase) * 0.1;
+                        mesh.material.emissive.setHSL(
+                            mesh.material.color.getHSL({}).h,
+                            0.5,
+                            intensity
+                        );
+                    }
+                }
+                
+                // 连接线脉冲
+                if (mesh.userData.pulsePhase !== undefined) {
+                    const opacity = mesh.userData.originalOpacity + 
+                        Math.sin(this.time * 4 + mesh.userData.pulsePhase) * 0.2;
+                    mesh.material.opacity = Math.max(0.1, opacity);
+                }
+            }
+            
+            // 粒子更新
+            if (mesh.geometry && mesh.geometry.attributes.velocity) {
+                const positions = mesh.geometry.attributes.position.array;
+                const velocities = mesh.geometry.attributes.velocity.array;
+                
+                for (let i = 0; i < positions.length; i += 3) {
+                    positions[i] += velocities[i];
+                    positions[i + 1] += velocities[i + 1];
+                    positions[i + 2] += velocities[i + 2];
+                    
+                    // 边界检测
+                    if (Math.abs(positions[i]) > 10) velocities[i] *= -1;
+                    if (Math.abs(positions[i + 1]) > 5) velocities[i + 1] *= -1;
+                    if (Math.abs(positions[i + 2]) > 2.5) velocities[i + 2] *= -1;
+                }
+                
+                mesh.geometry.attributes.position.needsUpdate = true;
+            }
+        });
+    }
+    
+    getConfigurationHTML() {
+        return `
+            <div class="config-section">
+                <h4>网络复杂度</h4>
+                <input type="range" min="1" max="5" value="3" 
+                       onchange="updateAIComplexity(this.value)">
+            </div>
+            <div class="config-section">
+                <h4>数据流速度</h4>
+                <input type="range" min="0.5" max="3" step="0.1" value="1"
+                       onchange="updateAIDataFlow(this.value)">
+            </div>
+            <div class="config-section">
+                <h4>AI模式</h4>
+                <select onchange="updateAIMode(this.value)">
+                    <option value="neural">神经网络</option>
+                    <option value="genetic">遗传算法</option>
+                    <option value="deeplearning">深度学习</option>
+                </select>
+            </div>
+        `;
+    }
+    
+    destroy() {
+        this.stop();
+        this.aiMeshes.forEach(mesh => {
+            if (mesh.geometry) mesh.geometry.dispose();
+            if (mesh.material) mesh.material.dispose();
+        });
+        this.aiMeshes = [];
+    }
+}
+
+// 配置更新函数扩展
+window.updateVolumetricDensity = function(value) {
+    console.log('更新体积密度:', value);
+};
+
+window.updateVolumetricScattering = function(value) {
+    console.log('更新体积散射:', value);
+};
+
+window.updateRayTracingDepth = function(value) {
+    console.log('更新光线追踪深度:', value);
+};
+
+window.updateRayTracingResolution = function(value) {
+    console.log('更新光线追踪分辨率:', value);
+};
+
+window.updateAIComplexity = function(value) {
+    console.log('更新AI复杂度:', value);
+};
+
+window.updateAIDataFlow = function(value) {
+    console.log('更新AI数据流速度:', value);
+};
+
+window.updateAIMode = function(value) {
+    console.log('更新AI模式:', value);
+};
+
+// 导出新的特效类
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { 
+        ParticleSystem, 
+        FluidSimulator, 
+        PhysicsEngine,
+        VolumetricRenderer,
+        RayTracingRenderer,
+        AIEffectSystem
+    };
+} 

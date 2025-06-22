@@ -260,6 +260,18 @@ class VFXApp {
         const physicsEngine = new PhysicsEngine(this.scene);
         this.effects.set('physics', physicsEngine);
         
+        // 体积渲染
+        const volumetricRenderer = new VolumetricRenderer(this.scene);
+        this.effects.set('volumetric', volumetricRenderer);
+        
+        // 光线追踪
+        const rayTracingRenderer = new RayTracingRenderer(this.scene);
+        this.effects.set('raytracing', rayTracingRenderer);
+        
+        // AI智能特效
+        const aiEffectSystem = new AIEffectSystem(this.scene);
+        this.effects.set('ai', aiEffectSystem);
+        
         // 启动默认特效
         this.toggleEffect('particles');
     }

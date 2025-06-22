@@ -209,16 +209,70 @@ pytest tests/test_particle_system.py
 
 ```
 newfutures-vfx/
-├── src/
-│   ├── core/           # Core engine / 核心引擎
-│   ├── effects/        # Effect implementations / 特效实现
-│   ├── renderers/      # Rendering backends / 渲染后端
-│   ├── physics/        # Physics engine / 物理引擎
-│   └── utils/          # Utilities / 工具函数
-├── tests/              # Test suite / 测试套件
-├── docs/               # Documentation / 文档
-├── examples/           # Example scripts / 示例脚本
-└── benchmarks/         # Performance tests / 性能测试
+├── 📁 src/                     # 核心源代码 / Core Source Code
+│   ├── 🚀 main.py             # 应用入口点 / Application Entry Point
+│   ├── 🔧 core/               # 核心引擎 / Core Engine
+│   │   ├── config.py          # 配置管理 / Configuration Management
+│   │   └── __init__.py        
+│   ├── 🎬 effects/            # 特效实现 / Effect Implementations
+│   │   ├── video_effects.py   # 视频特效 / Video Effects
+│   │   └── __init__.py        
+│   ├── 🌐 api/                # API路由 / API Routes
+│   ├── 👷 worker/             # 后台任务 / Background Tasks
+│   ├── 🛡️ middleware/         # 中间件 / Middleware
+│   ├── 📊 models/             # 数据模型 / Data Models
+│   ├── 📋 schemas/            # 数据架构 / Data Schemas
+│   ├── 🎯 services/           # 业务服务 / Business Services
+│   ├── 🏗️ assets/            # 静态资源 / Static Assets
+│   └── 🛠️ utils/             # 工具函数 / Utilities
+├── 🧪 tests/                  # 测试套件 / Test Suite
+├── 📚 docs/                   # 文档 / Documentation
+├── 🎨 public/                 # 公共资源 / Public Assets
+│   ├── samples/               # 示例文件 / Sample Files
+│   └── templates/             # 模板文件 / Template Files
+├── 📜 scripts/                # 构建脚本 / Build Scripts
+├── ⚙️ config/                 # 配置文件 / Configuration Files
+├── 🔄 migrations/             # 数据库迁移 / Database Migrations
+├── 🌐 api/                    # API定义 / API Definitions
+├── 👷 worker/                 # 工作进程 / Worker Processes
+├── 📄 templates/              # 页面模板 / Page Templates
+├── 🎨 static/                 # 静态文件 / Static Files
+├── 📦 requirements.txt        # Python依赖 / Python Dependencies
+├── 🐳 Dockerfile             # Docker配置 / Docker Configuration
+├── 🐳 docker-compose.yml     # Docker编排 / Docker Orchestration
+├── ⚙️ config.env.example     # 环境配置示例 / Environment Config Example
+├── 🚫 .gitignore             # Git忽略规则 / Git Ignore Rules
+└── 📖 README.md              # 项目说明 / Project Documentation
+
+📊 Architecture Layers / 架构层次:
+┌─────────────────────────────────────────────────────────────┐
+│ 🌐 Presentation Layer / 表现层                              │
+│   ├── REST API Endpoints / REST API端点                    │
+│   ├── WebSocket Connections / WebSocket连接                │
+│   └── Static File Serving / 静态文件服务                   │
+├─────────────────────────────────────────────────────────────┤
+│ 🎯 Business Logic Layer / 业务逻辑层                       │
+│   ├── VFX Processing Services / VFX处理服务                │
+│   ├── Media Management / 媒体管理                          │
+│   └── Task Orchestration / 任务编排                        │
+├─────────────────────────────────────────────────────────────┤
+│ 🛡️ Middleware Layer / 中间件层                             │
+│   ├── Authentication / 身份验证                            │
+│   ├── Rate Limiting / 速率限制                             │
+│   └── Error Handling / 错误处理                            │
+├─────────────────────────────────────────────────────────────┤
+│ 💾 Data Access Layer / 数据访问层                          │
+│   ├── PostgreSQL Database / PostgreSQL数据库              │
+│   ├── Redis Cache / Redis缓存                              │
+│   └── File Storage / 文件存储                              │
+└─────────────────────────────────────────────────────────────┘
+
+🔧 Key Components / 核心组件:
+• 🎬 VFX Engine: 高性能3D特效渲染引擎 / High-performance 3D VFX rendering engine
+• 🧠 AI Models: 智能特效生成和优化 / Intelligent effects generation and optimization  
+• 🔄 Task Queue: 异步任务处理系统 / Asynchronous task processing system
+• 📊 Monitoring: 全方位性能监控 / Comprehensive performance monitoring
+• 🐳 Containers: Docker化部署和扩展 / Dockerized deployment and scaling
 ```
 
 ## 🤝 Contributing / 贡献

@@ -1,0 +1,236 @@
+version: '3.8'
+
+services:
+  # =============================================================================
+  # 🎬 VFX应用服务 / VFX Application Service
+  # =============================================================================
+  app:
+    build: .
+    container_name: newfutures-vfx-app
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+      - ./models:/app/models
+    environment:
+      - DATABASE_URL=postgresql://postgres:vfx_password@db:5432/newfutures_vfx
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+    depends_on:
+      - db
+      - redis
+    networks:
+      - vfx-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  # =============================================================================
+  # 🗄️ PostgreSQL数据库 / PostgreSQL Database
+  # =============================================================================
+  db:
+    image: postgres:15-alpine
+    container_name: newfutures-vfx-db
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d
+    environment:
+      - POSTGRES_DB=newfutures_vfx
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=vfx_password
+    networks:
+      - vfx-network
+
+  # =============================================================================
+  # 📦 Redis缓存 / Redis Cache
+  # =============================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: newfutures-vfx-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    networks:
+      - vfx-network
+
+  # =============================================================================
+  # 🔄 Celery工作进程 / Celery Worker
+  # =============================================================================
+  worker:
+    build: .
+    container_name: newfutures-vfx-worker
+    restart: unless-stopped
+    volumes:
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+      - ./models:/app/models
+    environment:
+      - DATABASE_URL=postgresql://postgres:vfx_password@db:5432/newfutures_vfx
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+    command: python src/main.py worker
+    depends_on:
+      - db
+      - redis
+    networks:
+      - vfx-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  # =============================================================================
+  # 🌸 Celery Flower监控 / Celery Flower Monitoring
+  # =============================================================================
+  flower:
+    build: .
+    container_name: newfutures-vfx-flower
+    restart: unless-stopped
+    ports:
+      - "5555:5555"
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+    command: celery -A src.worker flower --port=5555
+    depends_on:
+      - redis
+    networks:
+      - vfx-network
+
+  # =============================================================================
+  # 📊 Prometheus监控 / Prometheus Monitoring
+  # =============================================================================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: newfutures-vfx-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - vfx-network
+
+  # =============================================================================
+  # 📈 Grafana仪表板 / Grafana Dashboard
+  # =============================================================================
+  grafana:
+    image: grafana/grafana:latest
+    container_name: newfutures-vfx-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./config/grafana/provisioning:/etc/grafana/provisioning
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=vfx_admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    depends_on:
+      - prometheus
+    networks:
+      - vfx-network
+
+  # =============================================================================
+  # 🔍 Elasticsearch日志存储 / Elasticsearch Log Storage
+  # =============================================================================
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.8.0
+    container_name: newfutures-vfx-elasticsearch
+    restart: unless-stopped
+    ports:
+      - "9200:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    networks:
+      - vfx-network
+
+  # =============================================================================
+  # 📝 Kibana日志可视化 / Kibana Log Visualization
+  # =============================================================================
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.8.0
+    container_name: newfutures-vfx-kibana
+    restart: unless-stopped
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    depends_on:
+      - elasticsearch
+    networks:
+      - vfx-network
+
+  # =============================================================================
+  # 🌐 Nginx反向代理 / Nginx Reverse Proxy
+  # =============================================================================
+  nginx:
+    image: nginx:alpine
+    container_name: newfutures-vfx-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./config/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./config/nginx/ssl:/etc/nginx/ssl
+      - ./static:/usr/share/nginx/html/static
+    depends_on:
+      - app
+    networks:
+      - vfx-network
+
+# =============================================================================
+# 📁 数据卷 / Volumes
+# =============================================================================
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  es_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+# =============================================================================
+# 🌐 网络 / Networks
+# =============================================================================
+networks:
+  vfx-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16 

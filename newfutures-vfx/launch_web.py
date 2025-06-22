@@ -95,13 +95,15 @@ def create_app():
         redoc_url="/api/redoc"
     )
     
-    # CORS中间件
+    # CORS中间件 - 完整配置
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
         allow_credentials=True,
-        allow_methods=["*"],
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"],
         allow_headers=["*"],
+        expose_headers=["*"],
+        max_age=3600,
     )
     
     # 静态文件服务
@@ -129,6 +131,11 @@ def create_app():
             "version": "0.1.0",
             "timestamp": time.time()
         }
+    
+    @app.options("/")
+    async def options_root():
+        """处理根路径的OPTIONS请求"""
+        return {"message": "CORS preflight OK"}
     
     @app.get("/api/status")
     async def api_status():

@@ -29,13 +29,15 @@ app = FastAPI(
     version="0.1.0",
 )
 
-# CORS中间件
+# CORS中间件 - 完整配置
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # 开发环境允许所有来源
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"],
     allow_headers=["*"],
+    expose_headers=["*"],
+    max_age=3600,
 )
 
 # 静态文件服务
@@ -45,6 +47,11 @@ app.mount("/static", StaticFiles(directory="public"), name="static")
 async def root():
     """提供主页面"""
     return FileResponse("public/index.html")
+
+@app.options("/")
+async def options_root():
+    """处理根路径的OPTIONS请求"""
+    return {"message": "CORS preflight OK"}
 
 @app.get("/health")
 async def health_check():

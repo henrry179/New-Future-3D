@@ -65,13 +65,15 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
     
-    # CORS中间件配置
+    # CORS中间件配置 - 完整配置
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.CORS_ORIGINS,
         allow_credentials=True,
-        allow_methods=["*"],
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"],
         allow_headers=["*"],
+        expose_headers=["*"],
+        max_age=3600,
     )
     
     # 静态文件服务
@@ -88,6 +90,17 @@ def create_app() -> FastAPI:
             "service": "newfutures-vfx",
             "version": "0.1.0"
         }
+    
+    # CORS预检请求处理
+    @app.options("/")
+    async def options_root():
+        """处理根路径的OPTIONS请求"""
+        return {"message": "CORS preflight OK"}
+    
+    @app.options("/{path:path}")
+    async def options_all(path: str):
+        """处理所有路径的OPTIONS请求"""
+        return {"message": "CORS preflight OK"}
     
     return app
 

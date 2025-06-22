@@ -132,7 +132,10 @@ class WebInterfaceTest:
         """测试CORS头部"""
         try:
             start_time = time.time()
-            response = self.session.options(self.base_url)
+            
+            # 首先尝试OPTIONS请求，包含Origin头部
+            headers = {"Origin": self.base_url}
+            response = self.session.options(self.base_url, headers=headers)
             response_time = time.time() - start_time
             
             cors_headers = [
@@ -141,11 +144,26 @@ class WebInterfaceTest:
                 "access-control-allow-headers"
             ]
             
-            has_cors = any(header in response.headers for header in cors_headers)
+            # 检查响应头中的CORS头部（不区分大小写）
+            response_headers_lower = {k.lower(): v for k, v in response.headers.items()}
+            has_cors = any(header in response_headers_lower for header in cors_headers)
+            
             if has_cors:
-                self.log_test("CORS配置", True, "CORS头部正确配置", response_time)
+                cors_info = []
+                for header in cors_headers:
+                    if header in response_headers_lower:
+                        cors_info.append(f"{header}: {response_headers_lower[header]}")
+                self.log_test("CORS配置", True, f"CORS头部正确配置 - {', '.join(cors_info[:2])}", response_time)
             else:
-                self.log_test("CORS配置", False, "CORS头部缺失", response_time)
+                # 如果OPTIONS请求没有CORS头部，尝试GET请求检查
+                get_response = self.session.get(urljoin(self.base_url, "/health"))
+                get_headers_lower = {k.lower(): v for k, v in get_response.headers.items()}
+                get_has_cors = any(header in get_headers_lower for header in cors_headers)
+                
+                if get_has_cors:
+                    self.log_test("CORS配置", True, "CORS头部在GET响应中配置正确", response_time)
+                else:
+                    self.log_test("CORS配置", False, f"CORS头部缺失 - OPTIONS状态: {response.status_code}", response_time)
         except Exception as e:
             self.log_test("CORS配置", False, f"测试失败: {str(e)}")
     

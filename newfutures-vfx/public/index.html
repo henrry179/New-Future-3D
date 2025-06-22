@@ -6,10 +6,10 @@
     <title>NewFutures VFX - 3D特效渲染平台</title>
     <link rel="stylesheet" href="/static/css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <!-- Three.js库 -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Three.js库 - 使用更稳定的CDN -->
+    <script src="https://unpkg.com/three@0.155.0/build/three.min.js"></script>
     <!-- 控制器 -->
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://unpkg.com/three@0.155.0/examples/js/controls/OrbitControls.js"></script>
     <!-- GUI控制器 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.9/dat.gui.min.js"></script>
 </head>
@@ -18,7 +18,7 @@
     <div id="loader">
         <div class="loader-content">
             <div class="loader-ring"></div>
-            <div class="loader-text">加载3D引擎中...</div>
+            <div class="loader-text">初始化VFX引擎...</div>
         </div>
     </div>
 
@@ -297,8 +297,239 @@
     </div>
 
     <!-- 脚本文件 -->
-    <script src="/static/js/app.js"></script>
-    <script src="/static/js/effects.js"></script>
-    <script src="/static/js/renderer.js"></script>
+    <script>
+        // 简化的初始化脚本，防止无限加载
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 NewFutures VFX 页面加载完成');
+            
+            // 设置加载超时，防止无限加载
+            const loader = document.getElementById('loader');
+            
+            // 2秒后自动隐藏加载动画
+            setTimeout(() => {
+                if (loader) {
+                    loader.style.opacity = '0';
+                    setTimeout(() => {
+                        loader.style.display = 'none';
+                    }, 500);
+                }
+                console.log('✅ 加载动画已隐藏');
+            }, 2000);
+            
+            // 检查Three.js是否加载成功
+            if (typeof THREE !== 'undefined') {
+                console.log('✅ Three.js 加载成功');
+                // 延迟加载主应用脚本
+                setTimeout(() => {
+                    loadMainScripts();
+                }, 1000);
+            } else {
+                console.warn('⚠️  Three.js 加载失败，使用简化模式');
+                // 即使Three.js加载失败也要隐藏加载动画
+                if (loader) {
+                    loader.style.opacity = '0';
+                    setTimeout(() => {
+                        loader.style.display = 'none';
+                    }, 500);
+                }
+                initSimpleMode();
+            }
+        });
+        
+        function loadMainScripts() {
+            // 动态加载主要脚本文件
+            const scripts = [
+                '/static/js/app.js',
+                '/static/js/effects.js',
+                '/static/js/renderer.js'
+            ];
+            
+            let loadedCount = 0;
+            scripts.forEach(src => {
+                const script = document.createElement('script');
+                script.src = src;
+                script.onload = () => {
+                    loadedCount++;
+                    console.log(`✅ 脚本加载完成: ${src}`);
+                    if (loadedCount === scripts.length) {
+                        console.log('🎉 所有脚本加载完成');
+                        initializeApp();
+                    }
+                };
+                script.onerror = () => {
+                    console.warn(`⚠️  脚本加载失败: ${src}`);
+                    loadedCount++;
+                    if (loadedCount === scripts.length) {
+                        initSimpleMode();
+                    }
+                };
+                document.head.appendChild(script);
+            });
+        }
+        
+        function initializeApp() {
+            try {
+                if (typeof VFXApp !== 'undefined') {
+                    window.vfxApp = new VFXApp();
+                    console.log('🎬 VFX应用初始化成功');
+                } else {
+                    console.warn('⚠️  VFXApp类未找到，使用简化模式');
+                    initSimpleMode();
+                }
+            } catch (error) {
+                console.error('❌ VFX应用初始化失败:', error);
+                initSimpleMode();
+            }
+        }
+        
+        function initSimpleMode() {
+            console.log('🔧 启动简化模式');
+            
+            // 添加基本的交互功能
+            initBasicInteractions();
+            
+            // 显示简化版本的提示
+            const heroTitle = document.querySelector('.hero-title');
+            if (heroTitle) {
+                heroTitle.innerHTML = '<span class="gradient-text">NewFutures VFX</span><br>专业特效平台';
+            }
+            
+            const heroSubtitle = document.querySelector('.hero-subtitle');
+            if (heroSubtitle) {
+                heroSubtitle.textContent = '欢迎使用NewFutures VFX平台。3D引擎正在优化中，基础功能可正常使用。';
+            }
+        }
+        
+        function initBasicInteractions() {
+            // 导航功能
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const target = link.getAttribute('href');
+                    scrollToSection(target);
+                    
+                    // 更新活动状态
+                    navLinks.forEach(l => l.classList.remove('active'));
+                    link.classList.add('active');
+                });
+            });
+            
+            // 移动端菜单
+            const hamburger = document.querySelector('.hamburger');
+            const navMenu = document.querySelector('.nav-menu');
+            if (hamburger && navMenu) {
+                hamburger.addEventListener('click', () => {
+                    navMenu.classList.toggle('active');
+                    hamburger.classList.toggle('active');
+                });
+            }
+            
+            // 特效按钮
+            const effectButtons = document.querySelectorAll('.effect-card .btn');
+            effectButtons.forEach(button => {
+                button.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const card = button.closest('.effect-card');
+                    const effectName = card.dataset.effect;
+                    
+                    if (card.classList.contains('active')) {
+                        card.classList.remove('active');
+                        button.innerHTML = '<i class="fas fa-play"></i> 启动';
+                        console.log(`🔴 停用特效: ${effectName}`);
+                    } else {
+                        card.classList.add('active');
+                        button.innerHTML = '<i class="fas fa-pause"></i> 停止';
+                        console.log(`🟢 启用特效: ${effectName}`);
+                    }
+                });
+            });
+            
+            // 主要按钮功能
+            const startDemoBtn = document.querySelector('button[onclick="startDemo()"]');
+            if (startDemoBtn) {
+                startDemoBtn.onclick = () => {
+                    alert('演示功能即将推出！');
+                    scrollToSection('#effects');
+                };
+            }
+            
+            const showDocsBtn = document.querySelector('button[onclick="showDocumentation()"]');
+            if (showDocsBtn) {
+                showDocsBtn.onclick = () => {
+                    window.open('/api/docs', '_blank');
+                };
+            }
+        }
+        
+        function scrollToSection(target) {
+            const element = document.querySelector(target);
+            if (element) {
+                element.scrollIntoView({ 
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        }
+        
+        // 全局函数，供HTML调用
+        window.startDemo = () => {
+            console.log('🎬 启动演示');
+            scrollToSection('#effects');
+        };
+        
+        window.showDocumentation = () => {
+            console.log('📚 打开文档');
+            window.open('/api/docs', '_blank');
+        };
+        
+        window.toggleEffect = (effectName) => {
+            console.log(`🔄 切换特效: ${effectName}`);
+            const card = document.querySelector(`[data-effect="${effectName}"]`);
+            if (card) {
+                const button = card.querySelector('.btn');
+                if (button) {
+                    button.click();
+                }
+            }
+        };
+        
+        window.configureEffect = (effectName) => {
+            console.log(`⚙️  配置特效: ${effectName}`);
+            alert(`${effectName} 配置功能正在开发中...`);
+        };
+        
+        window.startRender = () => {
+            console.log('🎥 开始渲染');
+            alert('渲染功能正在开发中...');
+        };
+        
+        window.exportRender = () => {
+            console.log('💾 导出渲染');
+            alert('导出功能正在开发中...');
+        };
+        
+        window.createNewEffect = () => {
+            console.log('✨ 创建新特效');
+            alert('新建特效功能正在开发中...');
+        };
+        
+        window.importAsset = () => {
+            console.log('📁 导入资产');
+            alert('导入资产功能正在开发中...');
+        };
+        
+        window.openSettings = () => {
+            console.log('⚙️  打开设置');
+            alert('设置功能正在开发中...');
+        };
+        
+        window.closeModal = () => {
+            const modal = document.getElementById('effect-modal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        };
+    </script>
 </body>
 </html> 

@@ -2,7 +2,7 @@
 Configuration management for NewFutures VFX Platform
 """
 
-from typing import List, Optional
+from typing import List, Optional, Union
 from pathlib import Path
 
 from pydantic import Field, field_validator
@@ -123,6 +123,22 @@ class Settings(BaseSettings):
         (self.BASE_DIR / "logs").mkdir(parents=True, exist_ok=True)
         (self.BASE_DIR / self.MODEL_CACHE_DIR).mkdir(parents=True, exist_ok=True)
         (self.BASE_DIR / self.RENDER_OUTPUT_DIR).mkdir(parents=True, exist_ok=True)
+    
+    @field_validator("CORS_ORIGINS", mode="before")
+    @classmethod
+    def validate_cors_origins(cls, v: Union[str, List[str]]) -> List[str]:
+        """验证CORS origins，支持逗号分隔的字符串"""
+        if isinstance(v, str):
+            return [origin.strip() for origin in v.split(",") if origin.strip()]
+        return v
+    
+    @field_validator("SUPPORTED_VIDEO_FORMATS", "SUPPORTED_AUDIO_FORMATS", mode="before")
+    @classmethod
+    def validate_formats(cls, v: Union[str, List[str]]) -> List[str]:
+        """验证格式列表，支持逗号分隔的字符串"""
+        if isinstance(v, str):
+            return [fmt.strip() for fmt in v.split(",") if fmt.strip()]
+        return v
     
     @field_validator("LOG_LEVEL")
     @classmethod

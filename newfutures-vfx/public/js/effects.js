@@ -1,22 +1,36 @@
 /**
- * 🎭 NewFutures VFX - 特效系统
- * 实现各种3D视觉特效
+ * 🎭 NewFutures VFX - 特效系统 (增强版)
+ * 实现各种高级3D视觉特效
  */
 
 /**
- * 粒子系统
+ * 高级粒子系统
  */
 class ParticleSystem {
     constructor(scene) {
         this.scene = scene;
         this.particles = null;
-        this.particleCount = 50000;
+        this.particleCount = 100000;
         this.positions = null;
         this.colors = null;
         this.velocities = null;
+        this.sizes = null;
+        this.lifetimes = null;
         this.geometry = null;
         this.material = null;
         this.isActive = false;
+        this.time = 0;
+        
+        // 粒子发射器设置
+        this.emitter = {
+            position: new THREE.Vector3(0, 0, 0),
+            rate: 1000, // 每秒发射粒子数
+            lifetime: 5.0, // 粒子生命周期
+            velocity: new THREE.Vector3(0, 5, 0),
+            spread: 2.0, // 发射角度扩散
+            size: 0.05,
+            sizeVariation: 0.02
+        };
         
         this.init();
     }

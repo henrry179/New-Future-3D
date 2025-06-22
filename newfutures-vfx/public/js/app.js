@@ -1,5 +1,5 @@
 /**
- * 🎬 NewFutures VFX - 主应用程序
+ * 🎬 NewFutures VFX - 主应用程序 (增强版)
  * 处理3D渲染引擎初始化和用户交互
  */
 
@@ -13,14 +13,34 @@ class VFXApp {
         this.activeEffects = new Set();
         this.performanceMonitor = new PerformanceMonitor();
         this.gui = null;
+        this.composer = null; // 后期处理合成器
+        this.clock = new THREE.Clock();
+        
+        // 渲染设置
+        this.renderSettings = {
+            quality: 'high',
+            resolution: '1920x1080',
+            antialiasing: true,
+            shadows: true,
+            postProcessing: true,
+            particleDensity: 1.0,
+            bloomStrength: 1.0,
+            exposure: 1.2
+        };
         
         // 初始化标志
         this.isInitialized = false;
         this.animationFrameId = null;
         
+        // 性能优化
+        this.frameSkip = 0;
+        this.targetFPS = 60;
+        this.adaptiveQuality = true;
+        
         // 绑定方法
         this.animate = this.animate.bind(this);
         this.onWindowResize = this.onWindowResize.bind(this);
+        this.onScroll = this.onScroll.bind(this);
         
         // 启动应用
         this.init();
@@ -135,11 +155,80 @@ class VFXApp {
     }
     
     /**
-     * 初始化后期处理
+     * 初始化后期处理 (增强版)
      */
     initPostProcessing() {
-        // 这里可以添加后期处理效果
-        // 如：SSAO, Bloom, Color Grading等
+        if (!this.renderSettings.postProcessing) return;
+        
+        // 创建后期处理合成器
+        this.composer = new THREE.EffectComposer(this.renderer);
+        
+        // 渲染通道
+        const renderPass = new THREE.RenderPass(this.scene, this.camera);
+        this.composer.addPass(renderPass);
+        
+        // Bloom效果
+        const bloomPass = new THREE.UnrealBloomPass(
+            new THREE.Vector2(window.innerWidth, window.innerHeight),
+            this.renderSettings.bloomStrength, // 强度
+            0.4, // 半径
+            0.85  // 阈值
+        );
+        this.composer.addPass(bloomPass);
+        
+        // FXAA抗锯齿
+        const fxaaPass = new THREE.ShaderPass(THREE.FXAAShader);
+        fxaaPass.material.uniforms['resolution'].value.x = 1 / window.innerWidth;
+        fxaaPass.material.uniforms['resolution'].value.y = 1 / window.innerHeight;
+        this.composer.addPass(fxaaPass);
+        
+        // 色彩校正
+        const colorCorrectionPass = new THREE.ShaderPass({
+            uniforms: {
+                'tDiffuse': { value: null },
+                'brightness': { value: 0.1 },
+                'contrast': { value: 1.1 },
+                'saturation': { value: 1.2 }
+            },
+            vertexShader: `
+                varying vec2 vUv;
+                void main() {
+                    vUv = uv;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                uniform sampler2D tDiffuse;
+                uniform float brightness;
+                uniform float contrast;
+                uniform float saturation;
+                varying vec2 vUv;
+                
+                void main() {
+                    vec4 color = texture2D(tDiffuse, vUv);
+                    
+                    // 亮度调整
+                    color.rgb += brightness;
+                    
+                    // 对比度调整
+                    color.rgb = (color.rgb - 0.5) * contrast + 0.5;
+                    
+                    // 饱和度调整
+                    vec3 gray = vec3(dot(color.rgb, vec3(0.299, 0.587, 0.114)));
+                    color.rgb = mix(gray, color.rgb, saturation);
+                    
+                    gl_FragColor = color;
+                }
+            `
+        });
+        this.composer.addPass(colorCorrectionPass);
+        
+        // 输出通道
+        const outputPass = new THREE.ShaderPass(THREE.CopyShader);
+        outputPass.renderToScreen = true;
+        this.composer.addPass(outputPass);
+        
+        console.log('✨ 后期处理系统初始化完成');
     }
     
     /**
@@ -198,11 +287,14 @@ class VFXApp {
     }
     
     /**
-     * 初始化事件监听
+     * 初始化事件监听 (增强版)
      */
     initEventListeners() {
         // 窗口大小调整
         window.addEventListener('resize', this.onWindowResize, false);
+        
+        // 滚动事件
+        window.addEventListener('scroll', this.onScroll, { passive: true });
         
         // 导航菜单
         this.initNavigation();
@@ -212,6 +304,15 @@ class VFXApp {
         
         // 浮动操作按钮
         this.initFAB();
+        
+        // 键盘快捷键
+        this.initKeyboardShortcuts();
+        
+        // 性能监控
+        this.initPerformanceOptimization();
+        
+        // 触摸手势支持
+        this.initTouchGestures();
     }
     
     /**
@@ -266,10 +367,18 @@ class VFXApp {
     }
     
     /**
-     * 主渲染循环
+     * 主渲染循环 (优化版)
      */
     animate() {
         this.animationFrameId = requestAnimationFrame(this.animate);
+        
+        const deltaTime = this.clock.getDelta();
+        const elapsedTime = this.clock.getElapsedTime();
+        
+        // 自适应质量控制
+        if (this.adaptiveQuality) {
+            this.adjustQualityBasedOnPerformance();
+        }
         
         // 更新控制器
         if (this.controls) {
@@ -277,13 +386,17 @@ class VFXApp {
         }
         
         // 更新特效
-        this.updateEffects();
+        this.updateEffects(deltaTime, elapsedTime);
         
         // 更新性能监控
         this.performanceMonitor.update();
         
         // 渲染场景
-        this.renderer.render(this.scene, this.camera);
+        if (this.composer && this.renderSettings.postProcessing) {
+            this.composer.render();
+        } else {
+            this.renderer.render(this.scene, this.camera);
+        }
     }
     
     /**

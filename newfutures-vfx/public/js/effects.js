@@ -472,4 +472,331 @@ window.updateGravity = function(value) {
 // 导出类
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { ParticleSystem, FluidSimulator, PhysicsEngine };
-} 
+}
+
+/**
+ * NewFutures VFX - 特效处理脚本
+ */
+
+// 特效管理器
+class EffectManager {
+    constructor() {
+        this.activeEffects = new Map();
+        this.effectCanvases = new Map();
+        this.initEffectCanvases();
+    }
+    
+    initEffectCanvases() {
+        // 初始化各个特效画布
+        const effectTypes = ['particles', 'fluid', 'raytracing', 'volumetric', 'physics', 'ai'];
+        
+        effectTypes.forEach(type => {
+            const canvas = document.getElementById(`${type}-canvas`);
+            if (canvas) {
+                this.setupEffectCanvas(type, canvas);
+            }
+        });
+    }
+    
+    setupEffectCanvas(type, canvas) {
+        const ctx = canvas.getContext('2d');
+        canvas.width = 300;
+        canvas.height = 200;
+        
+        this.effectCanvases.set(type, { canvas, ctx });
+        
+        // 开始默认动画
+        this.startDefaultAnimation(type);
+    }
+    
+    startDefaultAnimation(type) {
+        const canvasData = this.effectCanvases.get(type);
+        if (!canvasData) return;
+        
+        const { canvas, ctx } = canvasData;
+        
+        switch (type) {
+            case 'particles':
+                this.animateParticles(ctx, canvas);
+                break;
+            case 'fluid':
+                this.animateFluid(ctx, canvas);
+                break;
+            case 'raytracing':
+                this.animateRaytracing(ctx, canvas);
+                break;
+            case 'volumetric':
+                this.animateVolumetric(ctx, canvas);
+                break;
+            case 'physics':
+                this.animatePhysics(ctx, canvas);
+                break;
+            case 'ai':
+                this.animateAI(ctx, canvas);
+                break;
+        }
+    }
+    
+    animateParticles(ctx, canvas) {
+        const particles = [];
+        const particleCount = 50;
+        
+        // 初始化粒子
+        for (let i = 0; i < particleCount; i++) {
+            particles.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                vx: (Math.random() - 0.5) * 2,
+                vy: (Math.random() - 0.5) * 2,
+                size: Math.random() * 3 + 1,
+                color: `hsl(${Math.random() * 360}, 70%, 50%)`
+            });
+        }
+        
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'rgba(10, 10, 10, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            particles.forEach(particle => {
+                // 更新位置
+                particle.x += particle.vx;
+                particle.y += particle.vy;
+                
+                // 边界检测
+                if (particle.x < 0 || particle.x > canvas.width) particle.vx *= -1;
+                if (particle.y < 0 || particle.y > canvas.height) particle.vy *= -1;
+                
+                // 绘制粒子
+                ctx.beginPath();
+                ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+                ctx.fillStyle = particle.color;
+                ctx.fill();
+            });
+            
+            requestAnimationFrame(animate);
+        }
+        
+        animate();
+    }
+    
+    animateFluid(ctx, canvas) {
+        let time = 0;
+        
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 创建流体波纹效果
+            const imageData = ctx.createImageData(canvas.width, canvas.height);
+            const data = imageData.data;
+            
+            for (let x = 0; x < canvas.width; x++) {
+                for (let y = 0; y < canvas.height; y++) {
+                    const index = (y * canvas.width + x) * 4;
+                    const wave = Math.sin((x + time) * 0.02) * Math.sin((y + time) * 0.03);
+                    const intensity = Math.floor((wave + 1) * 127);
+                    
+                    data[index] = intensity * 0.3;     // R
+                    data[index + 1] = intensity * 0.6; // G
+                    data[index + 2] = intensity;       // B
+                    data[index + 3] = 255;             // A
+                }
+            }
+            
+            ctx.putImageData(imageData, 0, 0);
+            time += 1;
+            requestAnimationFrame(animate);
+        }
+        
+        animate();
+    }
+    
+    animateRaytracing(ctx, canvas) {
+        let angle = 0;
+        
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 绘制光线追踪效果
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.lineWidth = 2;
+            
+            for (let i = 0; i < 8; i++) {
+                const rayAngle = angle + (i * Math.PI / 4);
+                const endX = centerX + Math.cos(rayAngle) * 80;
+                const endY = centerY + Math.sin(rayAngle) * 80;
+                
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.lineTo(endX, endY);
+                ctx.stroke();
+                
+                // 绘制光点
+                ctx.beginPath();
+                ctx.arc(endX, endY, 3, 0, Math.PI * 2);
+                ctx.fillStyle = `hsl(${i * 45}, 100%, 70%)`;
+                ctx.fill();
+            }
+            
+            angle += 0.05;
+            requestAnimationFrame(animate);
+        }
+        
+        animate();
+    }
+    
+    animateVolumetric(ctx, canvas) {
+        let time = 0;
+        
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 创建体积云效果
+            for (let i = 0; i < 20; i++) {
+                const x = (Math.sin(time * 0.01 + i) + 1) * canvas.width / 2;
+                const y = (Math.cos(time * 0.015 + i * 0.5) + 1) * canvas.height / 2;
+                const size = Math.sin(time * 0.02 + i) * 20 + 30;
+                
+                const gradient = ctx.createRadialGradient(x, y, 0, x, y, size);
+                gradient.addColorStop(0, `rgba(255, 255, 255, ${0.3 + Math.sin(time * 0.03) * 0.2})`);
+                gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(x, y, size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            time += 1;
+            requestAnimationFrame(animate);
+        }
+        
+        animate();
+    }
+    
+    animatePhysics(ctx, canvas) {
+        const balls = [];
+        const ballCount = 15;
+        
+        // 初始化小球
+        for (let i = 0; i < ballCount; i++) {
+            balls.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                vx: (Math.random() - 0.5) * 4,
+                vy: (Math.random() - 0.5) * 4,
+                radius: Math.random() * 10 + 5,
+                color: `hsl(${Math.random() * 360}, 70%, 60%)`,
+                gravity: 0.2
+            });
+        }
+        
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'rgba(20, 20, 30, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            balls.forEach(ball => {
+                // 物理更新
+                ball.vy += ball.gravity;
+                ball.x += ball.vx;
+                ball.y += ball.vy;
+                
+                // 边界碰撞
+                if (ball.x - ball.radius < 0 || ball.x + ball.radius > canvas.width) {
+                    ball.vx *= -0.8;
+                    ball.x = Math.max(ball.radius, Math.min(canvas.width - ball.radius, ball.x));
+                }
+                if (ball.y - ball.radius < 0 || ball.y + ball.radius > canvas.height) {
+                    ball.vy *= -0.8;
+                    ball.y = Math.max(ball.radius, Math.min(canvas.height - ball.radius, ball.y));
+                }
+                
+                // 绘制小球
+                ctx.beginPath();
+                ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+                ctx.fillStyle = ball.color;
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.stroke();
+            });
+            
+            requestAnimationFrame(animate);
+        }
+        
+        animate();
+    }
+    
+    animateAI(ctx, canvas) {
+        let time = 0;
+        const nodes = [];
+        const nodeCount = 12;
+        
+        // 初始化神经网络节点
+        for (let i = 0; i < nodeCount; i++) {
+            nodes.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                vx: (Math.random() - 0.5) * 1,
+                vy: (Math.random() - 0.5) * 1,
+                activity: Math.random()
+            });
+        }
+        
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'rgba(10, 10, 20, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 更新节点
+            nodes.forEach((node, i) => {
+                node.x += node.vx;
+                node.y += node.vy;
+                node.activity = Math.sin(time * 0.02 + i) * 0.5 + 0.5;
+                
+                // 边界处理
+                if (node.x < 0 || node.x > canvas.width) node.vx *= -1;
+                if (node.y < 0 || node.y > canvas.height) node.vy *= -1;
+            });
+            
+            // 绘制连接线
+            ctx.strokeStyle = 'rgba(0, 255, 150, 0.3)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < nodes.length; i++) {
+                for (let j = i + 1; j < nodes.length; j++) {
+                    const dist = Math.hypot(nodes[i].x - nodes[j].x, nodes[i].y - nodes[j].y);
+                    if (dist < 80) {
+                        ctx.beginPath();
+                        ctx.moveTo(nodes[i].x, nodes[i].y);
+                        ctx.lineTo(nodes[j].x, nodes[j].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+            
+            // 绘制节点
+            nodes.forEach(node => {
+                const intensity = node.activity;
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, 4 + intensity * 6, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(0, 255, 150, ${intensity})`;
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.stroke();
+            });
+            
+            time += 1;
+            requestAnimationFrame(animate);
+        }
+        
+        animate();
+    }
+}
+
+// 初始化特效管理器
+const effectManager = new EffectManager(); 

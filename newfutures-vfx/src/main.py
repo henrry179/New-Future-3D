@@ -12,11 +12,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from loguru import logger
 
-from src.core.config import settings
-from src.core.database import init_db
-from src.core.redis_client import init_redis
-from src.api import router as api_router
-from src.utils.logger import setup_logger
+from core.config import settings
+from core.database import init_db
+from core.redis_client import init_redis
+from api import router as api_router
+from utils.logger import setup_logger
 
 
 @asynccontextmanager
@@ -122,10 +122,10 @@ def main():
         if command == "serve":
             run_server()
         elif command == "worker":
-            from src.worker import run_worker
+            from worker import run_worker
             run_worker()
         elif command == "migrate":
-            from src.core.database import run_migrations
+            from core.database import run_migrations
             asyncio.run(run_migrations())
         else:
             logger.error(f"Unknown command: {command}")

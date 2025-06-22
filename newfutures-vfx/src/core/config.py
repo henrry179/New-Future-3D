@@ -98,8 +98,8 @@ class Settings(BaseSettings):
     
     # 路径配置
     BASE_DIR: Path = Path(__file__).resolve().parent.parent.parent
-    UPLOAD_DIR: Path = Field(default=None, description="Upload directory")
-    TEMP_DIR: Path = Field(default=None, description="Temporary directory")
+    UPLOAD_DIR: Optional[Path] = Field(default=None, description="Upload directory")
+    TEMP_DIR: Optional[Path] = Field(default=None, description="Temporary directory")
     
     model_config = SettingsConfigDict(
         env_file=".env",

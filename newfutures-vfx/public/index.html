@@ -636,14 +636,14 @@
                             <h3><i class="fas fa-list"></i> 目录</h3>
                             <div class="docs-nav-section">
                                 <ul class="docs-nav-list">
-                                    <li><a href="#api-overview" class="docs-nav-link active">API 概览</a></li>
-                                    <li><a href="#authentication" class="docs-nav-link">身份验证</a></li>
-                                    <li><a href="#vfx-api" class="docs-nav-link">VFX 特效 API</a></li>
-                                    <li><a href="#render-api" class="docs-nav-link">渲染 API</a></li>
-                                    <li><a href="#media-api" class="docs-nav-link">媒体处理 API</a></li>
-                                    <li><a href="#websocket-api" class="docs-nav-link">WebSocket API</a></li>
-                                    <li><a href="#error-codes" class="docs-nav-link">错误代码</a></li>
-                                    <li><a href="#examples" class="docs-nav-link">示例代码</a></li>
+                                    <li><a href="#api-overview" class="docs-nav-link active">项目概览</a></li>
+                                    <li><a href="#features" class="docs-nav-link">核心功能</a></li>
+                                    <li><a href="#installation" class="docs-nav-link">安装指南</a></li>
+                                    <li><a href="#quick-start" class="docs-nav-link">快速开始</a></li>
+                                    <li><a href="#architecture" class="docs-nav-link">系统架构</a></li>
+                                    <li><a href="#technology-stack" class="docs-nav-link">技术栈</a></li>
+                                    <li><a href="#examples" class="docs-nav-link">代码示例</a></li>
+                                    <li><a href="#development-progress" class="docs-nav-link">开发进度</a></li>
                                 </ul>
                             </div>
                         </nav>
@@ -652,330 +652,395 @@
                     <div class="docs-main">
                         <article class="docs-article">
                             <header class="article-header">
-                                <h1>NewFutures VFX Platform API 文档</h1>
+                                <h1>NewFutures VFX - 专业3D视觉特效平台</h1>
                                 <div class="article-meta">
-                                    <span class="api-version">API 版本: v1.0.0</span>
-                                    <span class="base-url">基础URL: http://localhost:8000/api/v1</span>
-                                    <span class="last-updated">最后更新: 2025-01-20</span>
+                                    <span class="api-version">版本: v1.0.0</span>
+                                    <span class="base-url">开源许可: MIT License</span>
+                                    <span class="last-updated">最后更新: 2025-12-19</span>
                                 </div>
                             </header>
 
                             <div class="article-content">
-                                <!-- API 概览 -->
+                                <!-- 项目概览 -->
                                 <section id="api-overview" class="docs-section-content">
-                                    <h2><i class="fas fa-info-circle"></i> API 概览</h2>
-                                    <p>NewFutures VFX Platform 提供了一套完整的 RESTful API，用于处理3D视觉特效、实时渲染和媒体处理。</p>
+                                    <h2><i class="fas fa-info-circle"></i> 项目概览</h2>
+                                    <p>NewFutures VFX 是一个专为专业3D视觉特效制作打造的尖端平台。利用先进的AI算法、实时渲染和基于物理的模拟，让创作者能够制作好莱坞品质的视觉特效。</p>
                                     
                                     <div class="api-features">
                                         <div class="feature-grid">
                                             <div class="feature-item">
                                                 <i class="fas fa-magic"></i>
-                                                <h4>特效处理</h4>
-                                                <p>粒子系统、流体模拟、光线追踪等高级特效</p>
+                                                <h4>3D特效引擎</h4>
+                                                <p>支持数百万粒子的高级粒子模拟、逼真的水/烟雾/火焰模拟、体积特效渲染</p>
                                             </div>
                                             <div class="feature-item">
                                                 <i class="fas fa-video"></i>
                                                 <h4>实时渲染</h4>
-                                                <p>GPU加速的高性能实时渲染引擎</p>
+                                                <p>实时光线追踪、PBR材质工作流、GPU加速、4K/8K支持、VR/AR集成</p>
                                             </div>
                                             <div class="feature-item">
                                                 <i class="fas fa-brain"></i>
-                                                <h4>AI智能</h4>
-                                                <p>基于深度学习的智能特效生成</p>
+                                                <h4>AI智能工具</h4>
+                                                <p>AI动作捕捉、风格迁移、场景生成、自动绑定、深度合成工作流</p>
                                             </div>
                                             <div class="feature-item">
-                                                <i class="fas fa-cloud"></i>
-                                                <h4>云端处理</h4>
-                                                <p>分布式计算和云端渲染服务</p>
+                                                <i class="fas fa-cogs"></i>
+                                                <h4>技术栈</h4>
+                                                <p>OpenGL 4.6、Vulkan、NVIDIA OptiX、PyTorch、TensorFlow、USD格式支持</p>
                                             </div>
                                         </div>
                                     </div>
 
                                     <div class="api-endpoints-summary">
-                                        <h3>主要端点</h3>
+                                        <h3>核心特性</h3>
                                         <div class="endpoint-list">
                                             <div class="endpoint-item">
-                                                <span class="method get">GET</span>
-                                                <span class="path">/health</span>
-                                                <span class="description">健康检查</span>
+                                                <span class="method get">🎨</span>
+                                                <span class="path">粒子系统</span>
+                                                <span class="description">数百万粒子实时模拟，支持物理力场和生命周期管理</span>
                                             </div>
                                             <div class="endpoint-item">
-                                                <span class="method get">GET</span>
-                                                <span class="path">/vfx/effects</span>
-                                                <span class="description">获取特效列表</span>
+                                                <span class="method post">🌊</span>
+                                                <span class="path">流体动力学</span>
+                                                <span class="description">基于Navier-Stokes方程的高精度流体模拟</span>
                                             </div>
                                             <div class="endpoint-item">
-                                                <span class="method post">POST</span>
-                                                <span class="path">/render/start</span>
-                                                <span class="description">开始渲染任务</span>
+                                                <span class="method get">🔥</span>
+                                                <span class="path">实时光线追踪</span>
+                                                <span class="description">NVIDIA OptiX加速的照片级真实感光照</span>
                                             </div>
                                             <div class="endpoint-item">
-                                                <span class="method get">GET</span>
-                                                <span class="path">/render/progress/{task_id}</span>
-                                                <span class="description">获取渲染进度</span>
+                                                <span class="method post">🤖</span>
+                                                <span class="path">AI特效生成</span>
+                                                <span class="description">深度学习驱动的智能特效创建和优化</span>
                                             </div>
                                         </div>
                                     </div>
                                 </section>
 
-                                <!-- 身份验证 -->
-                                <section id="authentication" class="docs-section-content">
-                                    <h2><i class="fas fa-shield-alt"></i> 身份验证</h2>
-                                    <p>API 使用 JWT (JSON Web Token) 进行身份验证。</p>
+                                <!-- 核心功能 -->
+                                <section id="features" class="docs-section-content">
+                                    <h2><i class="fas fa-star"></i> 核心功能</h2>
+                                    <p>NewFutures VFX 提供了全面的3D视觉特效制作工具链，涵盖从基础特效到高级AI驱动的创作流程。</p>
                                     
-                                    <div class="code-block">
-                                        <div class="code-header">
-                                            <span class="code-title">请求头部</span>
-                                            <button class="copy-btn" onclick="copyCode(this)">
-                                                <i class="fas fa-copy"></i>
-                                            </button>
-                                        </div>
-                                        <pre><code>Authorization: Bearer YOUR_JWT_TOKEN
-Content-Type: application/json</code></pre>
-                                    </div>
-
-                                    <h3>获取访问令牌</h3>
-                                    <div class="api-endpoint">
-                                        <div class="endpoint-header">
-                                            <span class="method post">POST</span>
-                                            <span class="path">/auth/login</span>
-                                        </div>
-                                        <div class="endpoint-body">
-                                            <div class="code-block">
-                                                <div class="code-header">
-                                                    <span class="code-title">请求体</span>
-                                                    <button class="copy-btn" onclick="copyCode(this)">
-                                                        <i class="fas fa-copy"></i>
-                                                    </button>
-                                                </div>
-                                                <pre><code>{
-  "username": "your_username",
-  "password": "your_password"
-}</code></pre>
+                                    <div class="feature-section">
+                                        <h3><i class="fas fa-magic"></i> 3D特效引擎</h3>
+                                        <div class="feature-details">
+                                            <div class="feature-item-detailed">
+                                                <h4>🎨 粒子系统</h4>
+                                                <p>支持数百万粒子的高级粒子模拟，包含发射器配置、物理力场、生命周期管理和颜色渐变。</p>
+                                                <ul>
+                                                    <li>高性能GPU加速渲染</li>
+                                                    <li>多种发射器类型（球体、立方体、表面）</li>
+                                                    <li>物理碰撞和力场系统</li>
+                                                    <li>动态材质和纹理支持</li>
+                                                </ul>
                                             </div>
-                                            <div class="code-block">
-                                                <div class="code-header">
-                                                    <span class="code-title">响应</span>
-                                                    <button class="copy-btn" onclick="copyCode(this)">
-                                                        <i class="fas fa-copy"></i>
-                                                    </button>
-                                                </div>
-                                                <pre><code>{
-  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "token_type": "bearer",
-  "expires_in": 3600,
-  "user": {
-    "id": 1,
-    "username": "your_username",
-    "email": "user@example.com"
-  }
-}</code></pre>
+                                            <div class="feature-item-detailed">
+                                                <h4>🌊 流体动力学</h4>
+                                                <p>基于Navier-Stokes方程的高精度流体模拟，支持水、烟雾、火焰等多种流体类型。</p>
+                                                <ul>
+                                                    <li>实时流体模拟引擎</li>
+                                                    <li>体积渲染和表面重建</li>
+                                                    <li>温度和密度场模拟</li>
+                                                    <li>流体与固体交互</li>
+                                                </ul>
                                             </div>
-                                        </div>
-                                    </div>
-                                </section>
-
-                                <!-- VFX 特效 API -->
-                                <section id="vfx-api" class="docs-section-content">
-                                    <h2><i class="fas fa-magic"></i> VFX 特效 API</h2>
-                                    <p>管理和控制各种视觉特效的API端点。</p>
-
-                                    <div class="api-endpoint">
-                                        <div class="endpoint-header">
-                                            <span class="method get">GET</span>
-                                            <span class="path">/vfx/effects</span>
-                                            <span class="description">获取可用特效列表</span>
-                                        </div>
-                                        <div class="endpoint-body">
-                                            <div class="code-block">
-                                                <div class="code-header">
-                                                    <span class="code-title">响应示例</span>
-                                                    <button class="copy-btn" onclick="copyCode(this)">
-                                                        <i class="fas fa-copy"></i>
-                                                    </button>
-                                                </div>
-                                                <pre><code>{
-  "effects": [
-    {
-      "id": "particles",
-      "name": "粒子系统",
-      "description": "高性能粒子引擎",
-      "type": "particle_system",
-      "enabled": true,
-      "parameters": {
-        "count": {"type": "int", "default": 10000, "min": 1, "max": 1000000},
-        "lifetime": {"type": "float", "default": 5.0, "min": 0.1, "max": 60.0},
-        "size": {"type": "float", "default": 1.0, "min": 0.1, "max": 10.0}
-      }
-    },
-    {
-      "id": "fluid",
-      "name": "流体模拟",
-      "description": "基于物理的流体动力学模拟",
-      "type": "physics_simulation",
-      "enabled": true
-    }
-  ]
-}</code></pre>
+                                            <div class="feature-item-detailed">
+                                                <h4>💥 物理模拟</h4>
+                                                <p>完整的物理引擎支持，包括刚体、软体、布料动力学和破碎效果。</p>
+                                                <ul>
+                                                    <li>Bullet Physics集成</li>
+                                                    <li>实时碰撞检测</li>
+                                                    <li>软体和布料模拟</li>
+                                                    <li>程序化破碎系统</li>
+                                                </ul>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div class="api-endpoint">
-                                        <div class="endpoint-header">
-                                            <span class="method post">POST</span>
-                                            <span class="path">/vfx/effects/{effect_id}/start</span>
-                                            <span class="description">启动特效</span>
-                                        </div>
-                                        <div class="endpoint-body">
-                                            <div class="code-block">
-                                                <div class="code-header">
-                                                    <span class="code-title">请求体</span>
-                                                    <button class="copy-btn" onclick="copyCode(this)">
-                                                        <i class="fas fa-copy"></i>
-                                                    </button>
-                                                </div>
-                                                <pre><code>{
-  "parameters": {
-    "count": 50000,
-    "lifetime": 3.0,
-    "size": 2.0,
-    "color": [1.0, 0.5, 0.0],
-    "gravity": -9.8
-  }
-}</code></pre>
+                                    <div class="feature-section">
+                                        <h3><i class="fas fa-video"></i> 实时渲染</h3>
+                                        <div class="feature-details">
+                                            <div class="feature-item-detailed">
+                                                <h4>🔥 光线追踪</h4>
+                                                <p>NVIDIA OptiX加速的实时光线追踪，提供照片级真实感光照和反射效果。</p>
                                             </div>
-                                            <div class="code-block">
-                                                <div class="code-header">
-                                                    <span class="code-title">响应</span>
-                                                    <button class="copy-btn" onclick="copyCode(this)">
-                                                        <i class="fas fa-copy"></i>
-                                                    </button>
-                                                </div>
-                                                <pre><code>{
-  "status": "started",
-  "effect_id": "particles",
-  "session_id": "session_particles_1234",
-  "parameters": {
-    "count": 50000,
-    "lifetime": 3.0,
-    "size": 2.0
-  }
-}</code></pre>
+                                            <div class="feature-item-detailed">
+                                                <h4>🎨 PBR材质</h4>
+                                                <p>基于物理的渲染工作流，支持金属、电介质、透明和发光材质。</p>
+                                            </div>
+                                            <div class="feature-item-detailed">
+                                                <h4>📹 高分辨率输出</h4>
+                                                <p>支持4K/8K分辨率渲染，多种输出格式和HDR色彩空间。</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="feature-section">
+                                        <h3><i class="fas fa-brain"></i> AI智能工具</h3>
+                                        <div class="feature-details">
+                                            <div class="feature-item-detailed">
+                                                <h4>🤖 动作捕捉</h4>
+                                                <p>基于深度学习的动作跟踪和重定向，支持面部表情和全身动作捕捉。</p>
+                                            </div>
+                                            <div class="feature-item-detailed">
+                                                <h4>🎭 风格迁移</h4>
+                                                <p>将艺术风格应用到3D场景，支持多种艺术风格和实时预览。</p>
+                                            </div>
+                                            <div class="feature-item-detailed">
+                                                <h4>🏗️ 场景生成</h4>
+                                                <p>AI辅助的3D环境创建，自动生成地形、建筑和自然环境。</p>
                                             </div>
                                         </div>
                                     </div>
                                 </section>
 
-                                <!-- 渲染 API -->
-                                <section id="render-api" class="docs-section-content">
-                                    <h2><i class="fas fa-video"></i> 渲染 API</h2>
-                                    <p>高性能渲染引擎的API接口，支持实时渲染和批量处理。</p>
+                                <!-- 安装指南 -->
+                                <section id="installation" class="docs-section-content">
+                                    <h2><i class="fas fa-download"></i> 安装指南</h2>
+                                    <p>NewFutures VFX 支持多种安装方式，推荐使用Docker进行快速部署。</p>
 
-                                    <div class="api-endpoint">
-                                        <div class="endpoint-header">
-                                            <span class="method get">GET</span>
-                                            <span class="path">/render/capabilities</span>
-                                            <span class="description">获取渲染器能力</span>
+                                    <div class="installation-section">
+                                        <h3><i class="fab fa-docker"></i> Docker安装（推荐）</h3>
+                                        <p>Docker安装是最简单快捷的方式，自动处理所有依赖和环境配置。</p>
+                                        <div class="code-block">
+                                            <div class="code-header">
+                                                <span class="code-title">克隆仓库并启动</span>
+                                                <button class="copy-btn" onclick="copyCode(this)">
+                                                    <i class="fas fa-copy"></i>
+                                                </button>
+                                            </div>
+                                            <pre><code># 克隆仓库
+git clone https://github.com/henrry179/New-Future-3D.git
+cd newfutures-vfx
+
+# 使用Docker构建和运行
+docker-compose up -d
+
+# 访问平台
+open http://localhost:8000</code></pre>
                                         </div>
-                                        <div class="endpoint-body">
-                                            <div class="code-block">
-                                                <div class="code-header">
-                                                    <span class="code-title">响应示例</span>
-                                                    <button class="copy-btn" onclick="copyCode(this)">
-                                                        <i class="fas fa-copy"></i>
-                                                    </button>
+                                    </div>
+
+                                    <div class="installation-section">
+                                        <h3><i class="fas fa-cog"></i> 手动安装</h3>
+                                        <p>适合开发者和需要自定义配置的用户。</p>
+                                        
+                                        <h4>系统要求</h4>
+                                        <ul class="requirements-list">
+                                            <li><strong>GPU</strong>: NVIDIA GPU（支持CUDA 11.8+）</li>
+                                            <li><strong>内存</strong>: 16GB+ RAM</li>
+                                            <li><strong>显卡</strong>: OpenGL 4.6+ 支持</li>
+                                            <li><strong>Python</strong>: Python 3.10+</li>
+                                        </ul>
+
+                                        <div class="code-block">
+                                            <div class="code-header">
+                                                <span class="code-title">安装步骤</span>
+                                                <button class="copy-btn" onclick="copyCode(this)">
+                                                    <i class="fas fa-copy"></i>
+                                                </button>
+                                            </div>
+                                            <pre><code># 克隆并设置
+git clone https://github.com/henrry179/New-Future-3D.git
+cd newfutures-vfx
+
+# 创建虚拟环境
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+
+# 安装依赖
+pip install -r requirements.txt
+
+# 安装CUDA工具包（如未安装）
+# 访问：https://developer.nvidia.com/cuda-downloads
+
+# 运行应用
+python src/main.py</code></pre>
+                                        </div>
+                                    </div>
+
+                                    <div class="installation-section">
+                                        <h3><i class="fas fa-check-circle"></i> 验证安装</h3>
+                                        <p>安装完成后，可以通过以下方式验证系统是否正常工作：</p>
+                                        
+                                        <div class="verification-steps">
+                                            <div class="step-item">
+                                                <span class="step-number">1</span>
+                                                <div class="step-content">
+                                                    <h4>访问Web界面</h4>
+                                                    <p>打开浏览器访问 <code>http://localhost:8000</code></p>
                                                 </div>
-                                                <pre><code>{
-  "gpu_available": true,
-  "max_resolution": "8192x8192",
-  "supported_formats": ["mp4", "avi", "mov", "png", "jpg", "exr"],
-  "render_engines": [
-    {"name": "Cycles", "type": "raytracing", "available": true},
-    {"name": "Eevee", "type": "rasterization", "available": true},
-    {"name": "OptiX", "type": "gpu_raytracing", "available": true}
-  ],
-  "memory_info": {
-    "total_gb": 32,
-    "available_gb": 24,
-    "gpu_memory_gb": 12
-  }
-}</code></pre>
+                                            </div>
+                                            <div class="step-item">
+                                                <span class="step-number">2</span>
+                                                <div class="step-content">
+                                                    <h4>检查GPU状态</h4>
+                                                    <p>在界面中查看GPU使用率和CUDA支持状态</p>
+                                                </div>
+                                            </div>
+                                            <div class="step-item">
+                                                <span class="step-number">3</span>
+                                                <div class="step-content">
+                                                    <h4>测试特效渲染</h4>
+                                                    <p>点击"开始体验"按钮，尝试运行粒子系统特效</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </section>
+
+                                <!-- 快速开始 -->
+                                <section id="quick-start" class="docs-section-content">
+                                    <h2><i class="fas fa-rocket"></i> 快速开始</h2>
+                                    <p>通过以下示例快速了解如何使用NewFutures VFX创建令人惊叹的3D特效。</p>
+
+                                    <div class="quickstart-section">
+                                        <h3><i class="fas fa-magic"></i> 创建粒子特效</h3>
+                                        <p>使用Python API创建一个基础的粒子系统特效。</p>
+                                        <div class="code-block">
+                                            <div class="code-header">
+                                                <span class="code-title">粒子系统示例</span>
+                                                <button class="copy-btn" onclick="copyCode(this)">
+                                                    <i class="fas fa-copy"></i>
+                                                </button>
+                                            </div>
+                                            <pre><code>from newfutures_vfx import ParticleSystem, Scene
+
+# 创建场景
+scene = Scene(resolution=(1920, 1080), fps=60)
+
+# 添加粒子系统
+particles = ParticleSystem(
+    count=1000000,
+    emitter_type="sphere",
+    physics_enabled=True
+)
+
+# 配置粒子行为
+particles.set_properties(
+    lifetime=5.0,
+    velocity_range=(10, 50),
+    color_gradient=["#FF6B6B", "#4ECDC4", "#45B7D1"],
+    size_over_lifetime=[(0, 1.0), (0.5, 2.0), (1.0, 0.0)]
+)
+
+# 添加力场
+particles.add_force("gravity", strength=-9.81)
+particles.add_force("turbulence", strength=5.0)
+
+# 渲染
+scene.add_system(particles)
+scene.render(output="particle_effect.mp4")</code></pre>
+                                        </div>
+                                    </div>
+
+                                    <div class="quickstart-section">
+                                        <h3><i class="fas fa-water"></i> 流体模拟示例</h3>
+                                        <p>创建逼真的流体模拟效果，支持水、烟雾、火焰等多种类型。</p>
+                                        <div class="code-block">
+                                            <div class="code-header">
+                                                <span class="code-title">流体模拟代码</span>
+                                                <button class="copy-btn" onclick="copyCode(this)">
+                                                    <i class="fas fa-copy"></i>
+                                                </button>
+                                            </div>
+                                            <pre><code>from newfutures_vfx import FluidSimulator
+
+# 创建流体模拟
+fluid = FluidSimulator(
+    resolution=(256, 256, 256),
+    viscosity=0.01,
+    density=1000
+)
+
+# 添加流体源
+fluid.add_source(
+    position=(128, 200, 128),
+    radius=20,
+    velocity=(0, -50, 0),
+    temperature=100
+)
+
+# 添加障碍物
+fluid.add_obstacle(
+    type="sphere",
+    position=(128, 128, 128),
+    radius=30
+)
+
+# 模拟和渲染
+fluid.simulate(frames=300)
+fluid.render_volumetric(output="fluid_sim.mp4")</code></pre>
+                                        </div>
+                                    </div>
+
+                                    <div class="quickstart-section">
+                                        <h3><i class="fas fa-eye"></i> Web界面快速体验</h3>
+                                        <p>通过Web界面可以快速预览和调试各种特效，无需编程经验。</p>
+                                        
+                                        <div class="web-steps">
+                                            <div class="step-item">
+                                                <span class="step-number">1</span>
+                                                <div class="step-content">
+                                                    <h4>启动服务</h4>
+                                                    <p>运行 <code>python src/main.py</code> 启动Web服务</p>
+                                                </div>
+                                            </div>
+                                            <div class="step-item">
+                                                <span class="step-number">2</span>
+                                                <div class="step-content">
+                                                    <h4>访问界面</h4>
+                                                    <p>浏览器打开 <code>http://localhost:8000</code></p>
+                                                </div>
+                                            </div>
+                                            <div class="step-item">
+                                                <span class="step-number">3</span>
+                                                <div class="step-content">
+                                                    <h4>选择特效</h4>
+                                                    <p>在特效库中选择粒子系统、流体模拟等特效</p>
+                                                </div>
+                                            </div>
+                                            <div class="step-item">
+                                                <span class="step-number">4</span>
+                                                <div class="step-content">
+                                                    <h4>调整参数</h4>
+                                                    <p>使用控制面板实时调整特效参数</p>
+                                                </div>
+                                            </div>
+                                            <div class="step-item">
+                                                <span class="step-number">5</span>
+                                                <div class="step-content">
+                                                    <h4>导出渲染</h4>
+                                                    <p>点击渲染按钮导出高质量视频</p>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div class="api-endpoint">
-                                        <div class="endpoint-header">
-                                            <span class="method post">POST</span>
-                                            <span class="path">/render/start</span>
-                                            <span class="description">开始渲染任务</span>
-                                        </div>
-                                        <div class="endpoint-body">
-                                            <div class="code-block">
-                                                <div class="code-header">
-                                                    <span class="code-title">请求体</span>
-                                                    <button class="copy-btn" onclick="copyCode(this)">
-                                                        <i class="fas fa-copy"></i>
-                                                    </button>
-                                                </div>
-                                                <pre><code>{
-  "resolution": "1920x1080",
-  "quality": "high",
-  "output_format": "mp4",
-  "engine": "Cycles",
-  "samples": 256,
-  "effects": ["particles", "fluid"],
-  "duration": 300,
-  "fps": 30
-}</code></pre>
+                                    <div class="quickstart-section">
+                                        <h3><i class="fas fa-lightbulb"></i> 快速提示</h3>
+                                        <div class="tips-grid">
+                                            <div class="tip-item">
+                                                <i class="fas fa-bolt"></i>
+                                                <h4>性能优化</h4>
+                                                <p>使用GPU加速可以显著提升渲染速度，建议使用NVIDIA RTX系列显卡</p>
                                             </div>
-                                            <div class="code-block">
-                                                <div class="code-header">
-                                                    <span class="code-title">响应</span>
-                                                    <button class="copy-btn" onclick="copyCode(this)">
-                                                        <i class="fas fa-copy"></i>
-                                                    </button>
-                                                </div>
-                                                <pre><code>{
-  "status": "started",
-  "task_id": "render_task_67890",
-  "estimated_time": "5-10 minutes",
-  "progress_url": "/api/v1/render/progress/render_task_67890",
-  "config": {
-    "resolution": "1920x1080",
-    "quality": "high",
-    "output_format": "mp4"
-  }
-}</code></pre>
+                                            <div class="tip-item">
+                                                <i class="fas fa-save"></i>
+                                                <h4>项目保存</h4>
+                                                <p>所有场景配置都会自动保存，支持导入导出项目文件</p>
                                             </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="api-endpoint">
-                                        <div class="endpoint-header">
-                                            <span class="method get">GET</span>
-                                            <span class="path">/render/progress/{task_id}</span>
-                                            <span class="description">获取渲染进度</span>
-                                        </div>
-                                        <div class="endpoint-body">
-                                            <div class="code-block">
-                                                <div class="code-header">
-                                                    <span class="code-title">响应示例</span>
-                                                    <button class="copy-btn" onclick="copyCode(this)">
-                                                        <i class="fas fa-copy"></i>
-                                                    </button>
-                                                </div>
-                                                <pre><code>{
-  "task_id": "render_task_67890",
-  "progress": 75,
-  "status": "rendering",
-  "current_frame": 75,
-  "total_frames": 100,
-  "elapsed_time": "150 seconds",
-  "estimated_remaining": "50 seconds",
-  "output_preview": "/api/v1/render/preview/render_task_67890"
-}</code></pre>
+                                            <div class="tip-item">
+                                                <i class="fas fa-palette"></i>
+                                                <h4>材质库</h4>
+                                                <p>内置丰富的PBR材质库，支持自定义材质和纹理</p>
+                                            </div>
+                                            <div class="tip-item">
+                                                <i class="fas fa-code"></i>
+                                                <h4>脚本扩展</h4>
+                                                <p>支持Python脚本扩展，可以创建自定义特效和工具</p>
                                             </div>
                                         </div>
                                     </div>
@@ -1307,17 +1372,17 @@ async function createParticleEffect() {
                         </article>
                     </div>
 
-                    <div class="docs-toc">
+                                            <div class="docs-toc">
                         <h4>页面导航</h4>
                         <ul class="toc-list">
-                            <li><a href="#api-overview">API 概览</a></li>
-                            <li><a href="#authentication">身份验证</a></li>
-                            <li><a href="#vfx-api">VFX 特效 API</a></li>
-                            <li><a href="#render-api">渲染 API</a></li>
-                            <li><a href="#media-api">媒体处理 API</a></li>
-                            <li><a href="#websocket-api">WebSocket API</a></li>
-                            <li><a href="#error-codes">错误代码</a></li>
-                            <li><a href="#examples">示例代码</a></li>
+                            <li><a href="#api-overview">项目概览</a></li>
+                            <li><a href="#features">核心功能</a></li>
+                            <li><a href="#installation">安装指南</a></li>
+                            <li><a href="#quick-start">快速开始</a></li>
+                            <li><a href="#architecture">系统架构</a></li>
+                            <li><a href="#technology-stack">技术栈</a></li>
+                            <li><a href="#examples">代码示例</a></li>
+                            <li><a href="#development-progress">开发进度</a></li>
                         </ul>
                         
                         <div class="docs-tools">
